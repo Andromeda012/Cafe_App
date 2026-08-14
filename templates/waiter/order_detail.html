@@ -1,0 +1,8 @@
+{% extends "waiter/base.html" %}
+{% block title %}Sipariş Detayı | Noir{% endblock %}
+{% block content %}
+<section class="waiter-detail-header"><a href="{{ url_for('waiter_dashboard') }}">← Terminale dön</a><span class="eyebrow">Sipariş #{{ order[0] }}</span><h1>Masa {{ order[1] }}</h1></section>
+<section class="waiter-detail-card"><h2>Sipariş İçeriği</h2><div class="waiter-items">{% for item in items %}<div class="waiter-item"><div><strong>{{ item[0] }}</strong><span>{{ item[1] }} adet</span></div><strong>{{ item[3] }} TL</strong></div>{% endfor %}</div></section>
+{% if order[7] %}<section class="waiter-note"><span class="eyebrow">Müşteri notu</span><p>{{ order[7] }}</p></section>{% endif %}
+<section class="waiter-detail-meta"><div><small>Müşteri</small><strong>{{ order[2] }}</strong></div><div><small>Toplam</small><strong>{{ order[4] }} TL</strong></div><div><small>Durum</small><strong>{{ order[5] }}</strong></div></section>
+{% endblock %}

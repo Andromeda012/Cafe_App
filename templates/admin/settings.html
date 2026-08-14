@@ -1,0 +1,24 @@
+{% extends "admin/base.html" %}
+{% block title %}Ayarlar | Noir Coffee Yönetim{% endblock %}
+{% block content %}
+<section class="admin-page-heading">
+    <div>
+        <span class="eyebrow">Sistem ayarları</span>
+        <h1>Ayarlar</h1>
+        <p>Geliştirme ve test ortamında kullanılan yönetim araçları.</p>
+    </div>
+    <a class="button button-secondary" href="{{ url_for('admin_dashboard') }}">Yönetim Terminaline dön</a>
+</section>
+
+<section class="settings-grid">
+    <article class="settings-card settings-card-danger">
+        <span class="eyebrow">Test ortamı</span>
+        <h2>Test verilerini temizle</h2>
+        <p>Geçmiş siparişleri, ürün satırlarını, ödeme hareketlerini ve müşteri bildirimlerini temizler. Stoklar, masalar ve garson hesapları korunur.</p>
+        <div class="settings-warning">Bu işlem geri alınamaz. Gerçek kullanım verileri bulunan bir sistemde kullanmayın.</div>
+        <form action="{{ url_for('admin_reset_test_data') }}" method="post" onsubmit="return confirm('Tüm test siparişlerini ve ödeme hareketlerini silmek istediğinize emin misiniz?');">
+            <button class="button button-danger" type="submit">Test verilerini temizle</button>
+        </form>
+    </article>
+</section>
+{% endblock %}

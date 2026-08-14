@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Noir Coffee Yönetim{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/renewed-ui.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/noir-dark.css') }}"><script>
+(function(){
+  try {
+    var saved=localStorage.getItem('noir-theme');
+    if(saved==='light') document.documentElement.classList.add('theme-light');
+  } catch(e){}
+})();
+</script></head>
+<body class="admin-body"><div class="admin-shell"><header class="admin-header">
+<a class="brand" href="{{ url_for('admin_dashboard') }}"><span class="brand-mark">N</span><span><strong>Noir Coffee</strong><small>Yönetim Terminali</small></span></a>
+<nav class="admin-nav" aria-label="Yönetim menüsü">
+<a href="{{ url_for('admin_dashboard') }}">Yönetim Terminali</a>
+<a href="{{ url_for('admin_orders') }}">Mutfak Terminali</a>
+<a class="quick-switch" href="{{ url_for('waiter_dashboard') }}">Garson Terminali ↗</a>
+<a href="{{ url_for('cashier_terminal') }}">Kasiyer Terminali</a>
+<a class="admin-logout" href="{{ url_for('admin_logout') }}">Çıkış</a>
+</nav></header><main class="admin-main">{% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<div class="admin-flash-stack">{% for category, message in messages %}<div class="admin-flash admin-flash-{{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}{% endwith %}{% block content %}{% endblock %}</main></div>{% block scripts %}{% endblock %}<button class="theme-toggle" id="theme-toggle" type="button" aria-label="Temayı değiştir">
+    <span class="theme-toggle-icon" id="theme-toggle-icon">☀️</span>
+    <span class="theme-toggle-label" id="theme-toggle-label">Açık tema</span>
+</button>
+<script>
+(function(){
+  const root=document.documentElement;
+  const button=document.getElementById('theme-toggle');
+  const icon=document.getElementById('theme-toggle-icon');
+  const label=document.getElementById('theme-toggle-label');
+  function sync(){
+    const light=root.classList.contains('theme-light');
+    if(icon) icon.textContent=light?'🌙':'☀️';
+    if(label) label.textContent=light?'Koyu tema':'Açık tema';
+    if(button) button.setAttribute('aria-label',light?'Koyu temaya geç':'Açık temaya geç');
+  }
+  if(button){
+    button.addEventListener('click',function(){
+      root.classList.toggle('theme-light');
+      const value=root.classList.contains('theme-light')?'light':'dark';
+      try{localStorage.setItem('noir-theme',value);}catch(e){}
+      sync();
+    });
+  }
+  sync();
+})();
+</script></body></html>

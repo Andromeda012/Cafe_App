@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Sipariş #{{ order_header[0] }} | Noir Coffee{% endblock %}
+
+{% block content %}
+<section class="page-hero compact-hero">
+    <div>
+        <span class="eyebrow">Sipariş detayı</span>
+        <h1>Sipariş #{{ order_header[0] }}</h1>
+        <p>Masa {{ order_header[1] }} için verdiğiniz siparişin güncel durumu ve içeriği.</p>
+    </div>
+    <a class="button button-secondary" href="{{ url_for('my_orders') }}">Siparişlerime dön</a>
+    {% if can_edit %}<a class="button button-primary" href="{{ url_for('edit_my_order', siparis_id=order_header[0]) }}">Siparişi düzenle</a>{% endif %}
+</section>
+
+<section class="customer-order-detail-layout">
+    <div class="customer-order-detail-card">
+        <div class="detail-heading-row">
+            <div>
+                <span class="eyebrow">İçerik</span>
+                <h2>Siparişiniz</h2>
+            </div>
+            <span class="order-status-pill">{{ order_header[3] }}</span>
+        </div>
+
+        <div class="order-item-list">
+            {% for item in order_items %}
+            <div class="order-item-row">
+                <div>
+                    <strong>{{ item[0] }}</strong>
+                    <small>{{ item[2] }} adet × {{ item[1] }} TL</small>
+                </div>
+                <strong>{{ item[3] }} TL</strong>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <aside class="summary-card order-info-card">
+        <span class="eyebrow">Sipariş bilgisi</span>
+        <div class="summary-row"><span>Masa</span><strong>{{ order_header[1] }}</strong></div>
+        <div class="summary-row"><span>Tarih</span><strong>{{ order_header[4]|datetime_tr }}</strong></div>
+        <div class="summary-row"><span>Servis</span><strong>{{ order_header[6] }}</strong></div>
+        {% if order_header[7] %}<div class="summary-row"><span>Servis ücreti</span><strong>{{ order_header[7] }} TL</strong></div>{% endif %}
+        <div class="summary-total"><span>Toplam</span><strong>{{ order_header[2] }} TL</strong></div>
+        {% if can_cancel %}
+        <div class="order-cancel-detail">
+            <strong>Henüz mutfak hazırlığı başlamadı.</strong>
+            <p>İsterseniz bu siparişi kalan süre içinde iptal edebilirsiniz.</p>
+            <span class="cancel-countdown" data-cancel-seconds="{{ cancel_remaining_seconds }}"></span>
+            <form action="{{ url_for('cancel_my_order', siparis_id=order_header[0]) }}" method="post" onsubmit="return confirm('Siparişinizi iptal etmek istediğinize emin misiniz?');">
+                <button class="button button-danger button-full" type="submit">Siparişi iptal et</button>
+            </form>
+        </div>
+        {% endif %}
+        {% if order_header[5] %}
+        <div class="order-note-box">
+            <small>Notunuz</small>
+            <p>{{ order_header[5] }}</p>
+        </div>
+        {% endif %}
+    </aside>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('[data-cancel-seconds]').forEach(function (element) {
+    let seconds = Number(element.dataset.cancelSeconds) || 0;
+    function render() {
+        if (seconds <= 0) {
+            element.textContent = 'İptal süresi doldu';
+            const form = element.parentElement?.querySelector('form');
+            if (form) form.remove();
+            return;
+        }
+        const minutes = Math.floor(seconds / 60);
+        const remain = String(seconds % 60).padStart(2, '0');
+        element.textContent = `İptal için ${minutes}:${remain}`;
+        seconds -= 1;
+        setTimeout(render, 1000);
+    }
+    render();
+});
+</script>
+{% endblock %}

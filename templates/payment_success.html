@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Sipariş Alındı | Noir Coffee{% endblock %}
+{% block content %}
+<section class="success-page"><div class="success-card"><div class="success-icon">✓</div><span class="eyebrow">Sipariş #{{ siparis_id }}</span><h1>Siparişiniz alındı.</h1>{% if payment_info and payment_info[4] == 'Ödendi' %}<p>Demo ödemeniz başarıyla tamamlandı. Siparişiniz mutfak onayı bekliyor.</p>{% elif payment_info and payment_info[4] == 'Kasada Bekliyor' %}<p>Kasada ödeme seçildi. Ödemeniz kasiyer tarafından tamamlanacak.</p>{% else %}<p>Siparişiniz mutfak onayı bekliyor. Ödeme durumunu takip edebilirsiniz.</p>{% endif %}<div class="success-actions"><a class="button button-primary" href="{{ url_for('my_orders') }}">Siparişlerimi görüntüle</a><a class="button button-secondary" href="{{ url_for('order_app') }}">Menüye dön</a></div></div></section>
+<script>localStorage.setItem('basketCount','0');</script>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Ödeme | Noir Coffee{% endblock %}
+{% block content %}
+<section class="page-hero compact-hero"><div><span class="eyebrow">Son adım</span><h1>Ödeme yöntemi</h1><p>Sipariş #{{ siparis_id }} için ödemenizi şimdi tamamlayın veya kasada ödeme seçeneğini kullanın.</p></div><a class="button button-secondary" href="{{ url_for('my_orders') }}">Siparişlerim</a></section>
+<section class="checkout-layout payment-choice-layout">
+<form class="checkout-card" method="post" id="demo-payment-form">
+    {% if error %}<div class="form-alert">{{ error }}</div>{% endif %}
+    <div class="form-section"><div class="form-heading"><span>01</span><div><h2>Ödeme tercihi</h2><p>Size uygun yöntemi seçin.</p></div></div>
+        <div class="payment-options modern-payment-options">
+            <label class="payment-option"><input type="radio" name="payment_method" value="card" checked><span><strong>Şimdi öde</strong><small>Demo kart ödemesi ile devam edin.</small></span></label>
+            <label class="payment-option"><input type="radio" name="payment_method" value="cash"><span><strong>Kasada öde</strong><small>Şimdilik kasada ödeme seçili kalsın; isterseniz daha sonra bu ekrandan kartla ödeyebilirsiniz.</small></span></label>
+        </div>
+    </div>
+    <div class="form-section" id="card-demo-fields"><div class="form-heading"><span>02</span><div><h2>Demo kart bilgileri</h2><p>Bu aşamada gerçek kart bilgisi kullanmayın. Tüm alanlara <strong>1</strong> yazmanız yeterli.</p></div></div>
+        <div class="form-grid card-fields"><label class="full-field"><span>Kart numarası</span><input type="text" name="card_number" placeholder="1" inputmode="numeric"></label><label><span>Son kullanma tarihi</span><input type="text" name="expiry" placeholder="1"></label><label><span>CVV</span><input type="password" name="cvv" placeholder="1" inputmode="numeric"></label></div>
+    </div>
+    <div class="checkout-total-strip"><span>Ödenecek toplam</span><strong>{{ total }} TL</strong></div>
+    <button class="button button-primary button-full" type="submit">Ödemeyi tamamla</button>
+    <button class="button button-secondary button-full" type="button" id="pay-by-card-anyway">Kartla öde</button>
+    <p class="form-disclaimer">Bu ekran geliştirme amaçlı demo ödeme akışıdır; gerçek banka altyapısına bağlı değildir.</p>
+</form>
+<aside class="checkout-note"><span class="eyebrow">Noir Coffee</span><h2>Siparişiniz mutfağa iletildi.</h2><p>Ödeme tercihinizi tamamladıktan sonra siparişinizin durumunu Siparişlerim ekranından takip edebilirsiniz.</p><ul><li>Demo kart: tüm alanlar 1</li><li>Kasada ödeme: kasiyer onayı bekler</li><li>Masa: {{ payment_info[1] }}</li><li>Servis: {{ payment_info[5] }}</li>{% if payment_info[6] %}<li>Servis ücreti: {{ payment_info[6] }} TL</li>{% endif %}</ul></aside>
+</section>
+{% endblock %}
+{% block scripts %}<script>(function(){const radios=document.querySelectorAll('input[name="payment_method"]');const fields=document.getElementById('card-demo-fields');const cardButton=document.getElementById('pay-by-card-anyway');function sync(){const selected=document.querySelector('input[name="payment_method"]:checked');if(fields) fields.hidden=selected?.value==='cash';if(cardButton) cardButton.hidden=selected?.value==='card';}radios.forEach(r=>r.addEventListener('change',sync));if(cardButton) cardButton.addEventListener('click',()=>{const card=document.querySelector('input[name="payment_method"][value="card"]');if(card){card.checked=true;sync();fields?.scrollIntoView({behavior:'smooth',block:'center'});}});sync();})();</script>{% endblock %}

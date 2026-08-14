@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Menü | Noir Coffee{% endblock %}
+{% block content %}
+<section class="page-hero compact-hero renewed-menu-hero">
+    <div><span class="eyebrow">Kahve menüsü</span><h1>Bir dokunuşla sipariş verin.</h1><p>Kartın herhangi bir yerine dokunun. Sepetteki ürünlerin adedini menüden ayrılmadan değiştirebilirsiniz.</p></div>
+    <button class="button button-secondary" type="button" data-cart-open>Sepeti aç</button>
+</section>
+<section class="menu-section">
+    <div class="menu-grid renewed-menu-grid">
+        {% for stock in stocks %}
+        <article class="product-card product-card-clickable" data-product-code="{{ stock[2] }}" tabindex="0">
+            <form class="js-add-to-basket" action="{{ url_for('order_app') }}" method="post">
+                <input type="hidden" name="stok_kodu" value="{{ stock[2] }}">
+                <button type="submit" class="card-primary-action" aria-label="{{ stock[0] }} ürününü sepete ekle"></button>
+            </form>
+            <div class="product-art product-photo-wrap" aria-hidden="true">
+                <img class="product-photo" src="{{ url_for('static', filename='images/products/' ~ stock[2] ~ '.jpg') }}" alt="" loading="lazy">
+                <span class="product-photo-shade"></span>
+            </div>
+            <div class="product-info"><span class="product-code">{{ stock[2] }}</span><h2>{{ stock[0] }}</h2><p>Taze hazırlanır ve siparişinize özel servis edilir.</p></div>
+            <div class="product-footer renewed-product-footer">
+                <strong>{{ stock[1] }} TL</strong>
+                <span class="product-add-label" data-add-label>Sepete ekle</span>
+            </div>
+            <div class="product-inline-quantity" hidden>
+                <button type="button" data-inline-action="decrease" data-code="{{ stock[2] }}">−</button>
+                <strong data-product-quantity>0</strong>
+                <button type="button" data-inline-action="increase" data-code="{{ stock[2] }}">+</button>
+            </div>
+        </article>
+        {% else %}<div class="empty-state"><div class="empty-icon">☕</div><h2>Menü şu anda boş</h2><p>Ürünler eklendiğinde burada görüntülenecek.</p></div>{% endfor %}
+    </div>
+</section>
+{% endblock %}

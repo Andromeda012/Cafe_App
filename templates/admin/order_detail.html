@@ -1,0 +1,84 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Sipariş #{{ order_header[0] }} | Noir Coffee Yönetim{% endblock %}
+
+{% block content %}
+<section class="admin-page-heading">
+    <div>
+        <span class="eyebrow">Sipariş #{{ order_header[0] }}</span>
+        <h1>Masa {{ order_header[3] }}</h1>
+        <p>{{ order_header[6]|datetime_tr }} tarihinde oluşturuldu.</p>
+    </div>
+    <a class="button button-secondary" href="{{ url_for('admin_orders') }}">Siparişlere dön</a>
+</section>
+
+<section class="admin-detail-layout">
+    <div class="admin-detail-main">
+        <article class="admin-content-card">
+            <div class="admin-card-heading">
+                <div>
+                    <span class="eyebrow">İçerik</span>
+                    <h2>Siparişteki ürünler</h2>
+                </div>
+                <strong>{{ order_header[4] }} TL</strong>
+            </div>
+
+            <div class="admin-order-items">
+                {% for item in order_items %}
+                <div class="admin-order-item">
+                    <div class="admin-item-quantity">{{ item[2] }}×</div>
+                    <div>
+                        <strong>{{ item[0] }}</strong>
+                        <small>Birim fiyat {{ item[1] }} TL</small>
+                    </div>
+                    <strong>{{ item[3] }} TL</strong>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="admin-content-card">
+            <span class="eyebrow">Müşteri bilgileri</span>
+            <div class="admin-info-grid">
+                <div><small>Ad Soyad</small><strong>{{ order_header[1] }}</strong></div>
+                <div><small>Telefon</small><strong>{{ order_header[2] }}</strong></div>
+                <div><small>Masa</small><strong>{{ order_header[3] }}</strong></div>
+                <div><small>Sipariş tarihi</small><strong>{{ order_header[6]|datetime_tr }}</strong></div>
+                <div><small>Servis türü</small><strong>{{ order_header[8] }}</strong></div>
+                <div><small>Servis ücreti</small><strong>{{ order_header[9] }} TL</strong></div>
+            </div>
+
+            <div class="admin-note-box">
+                <small>Sipariş notu</small>
+                <p>{{ order_header[7] or "Not eklenmemiş." }}</p>
+            </div>
+        </article>
+    </div>
+
+    <aside class="admin-status-card">
+        <span class="eyebrow">Mutfak durumu</span>
+        <h2>{{ order_header[5] }}</h2>
+        {% if order_header[5] == 'Yeni' %}
+        <p>Sipariş henüz mutfak tarafından kabul edilmedi. Bu aşamada müşteri iptal hakkını kullanabilir.</p>
+        <form action="{{ url_for('admin_order_status', siparis_id=order_header[0]) }}" method="post">
+            <input type="hidden" name="siparis_durumu" value="Hazırlanıyor">
+            <button class="button button-primary button-full" type="submit">Hazırlamaya başla</button>
+        </form>
+        {% elif order_header[5] == 'Hazırlanıyor' %}
+        <p>Müşterinin iptal hakkı sona erdi. Sipariş hazır olduğunda garson havuzuna aktarın.</p>
+        <form action="{{ url_for('admin_order_status', siparis_id=order_header[0]) }}" method="post">
+            <input type="hidden" name="siparis_durumu" value="Hazır">
+            <button class="button button-primary button-full" type="submit">Sipariş hazır</button>
+        </form>
+        {% elif order_header[5] == 'Hazır' %}
+        {% if order_header[8] == 'Self Servis' %}<p>Müşteriye hazır bildirimi gönderildi. Sipariş teslim noktasından alınacak ve garson terminaline düşmeyecek.</p>{% else %}<p>Garsonun siparişi kabul etmesi bekleniyor.</p>{% endif %}
+        {% elif order_header[5] == 'Garsona Teslim Edildi' %}
+        <p>Sipariş garson tarafından alındı. Teslim durumunu yalnızca ilgili garson değiştirebilir.</p>
+        {% elif order_header[5] == 'Teslim Edildi' %}
+        <p>Sipariş müşteriye teslim edildi.</p>
+        {% else %}
+        <p>Sipariş iptal edildi.</p>
+        {% endif %}
+    </aside>
+</section>
+{% endblock %}

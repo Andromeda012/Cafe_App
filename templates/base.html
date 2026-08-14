@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1f1712">
+    <title>{% block title %}Noir Coffee{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/customer-flow.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/renewed-ui.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/noir-dark.css') }}"><script>
+(function(){
+  try {
+    var saved=localStorage.getItem('noir-theme');
+    if(saved==='light') document.documentElement.classList.add('theme-light');
+  } catch(e){}
+})();
+</script></head>
+<body>
+<div class="site-shell">
+    <header class="site-header">
+        <a class="brand" href="{{ url_for('main_menu') }}" aria-label="Ana sayfa">
+            <span class="brand-mark">N</span>
+            <span><strong>Noir Coffee</strong><small>Roastery & Café</small></span>
+        </a>
+        <nav class="main-nav" aria-label="Ana menü">
+            <a href="{{ url_for('main_menu') }}">Ana Sayfa</a>
+            <a href="{{ url_for('order_app') }}">Menü</a>
+<a class="orders-nav-link" href="{{ url_for('my_orders') }}">Siparişlerim<span class="order-notification-dot{% if unread_notification_count %} is-visible{% endif %}" id="order-notification-dot" aria-label="Yeni sipariş bildirimi"></span></a>
+            {% if admin_logged_in %}<a class="admin-nav-link" href="{{ url_for('admin_dashboard') }}">Admin Panel</a>{% else %}<a class="admin-nav-link" href="{{ url_for('admin_login') }}">Admin Girişi</a>{% endif %}
+        </nav>
+    </header>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="customer-flash-stack">
+        {% for category, message in messages %}
+        <div class="customer-flash customer-flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    <main>{% block content %}{% endblock %}</main>
+    <footer class="site-footer"><div><strong>Noir Coffee</strong><p>Özenle seçilmiş çekirdekler, sakin bir atmosfer ve iyi kahve.</p></div><span>© 2026 Noir Coffee</span></footer>
+</div>
+
+<div class="floating-cart" id="floating-cart">
+    <button class="floating-cart-trigger basket-link" type="button" data-cart-open aria-label="Sepeti aç">
+        <span class="floating-cart-icon">🛒</span>
+        {% if basket_count %}<span class="nav-badge">{{ basket_count }}</span>{% endif %}
+    </button>
+    <aside class="mini-cart floating-mini-cart" id="mini-cart" aria-hidden="true">
+        <div class="mini-cart-header">
+            <div><span class="eyebrow">Hızlı sepet</span><h2>Siparişiniz</h2></div>
+            <button type="button" class="mini-cart-close" data-cart-close aria-label="Sepeti kapat">×</button>
+        </div>
+        <div class="mini-cart-content" id="mini-cart-content"><div class="mini-cart-loading">Sepet hazırlanıyor…</div></div>
+        <div class="mini-cart-footer" id="mini-cart-footer"></div>
+    </aside>
+</div>
+
+<div class="toast" id="site-toast" role="status" aria-live="polite"></div>
+<script>
+(function () {
+    const toast = document.getElementById('site-toast');
+    const cart = document.getElementById('mini-cart');
+    const cartContent = document.getElementById('mini-cart-content');
+    const cartFooter = document.getElementById('mini-cart-footer');
+    let toastTimer;
+    let notificationCursor = 0;
+    let notificationInitialized = false;
+
+    function showToast(message) {
+        if (!toast) return;
+        toast.textContent = message;
+        toast.classList.add('is-visible');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('is-visible'), 1800);
+    }
+
+    function setBasketBadge(count) {
+        const numericCount = Math.max(0, Number(count) || 0);
+        const cartButton = document.querySelector('[data-cart-open]');
+        let badge = document.querySelector('.nav-badge');
+        if (numericCount > 0) {
+            if (!badge && cartButton) {
+                badge = document.createElement('span'); badge.className = 'nav-badge'; cartButton.appendChild(badge);
+            }
+            if (badge) badge.textContent = numericCount;
+        } else if (badge) badge.remove();
+    }
+
+    async function request(url, options = {}) {
+        const response = await fetch(url, options);
+        if (!response.ok) throw new Error('İşlem tamamlanamadı.');
+        return response.json();
+    }
+
+    async function loadCart() {
+        try {
+            const data = await request('{{ url_for("basket_data") }}');
+            renderCart(data);
+            syncMenuQuantities(data);
+            setBasketBadge(data.basket_count);
+        } catch (error) {
+            cartContent.innerHTML = '<div class="mini-cart-empty"><strong>Sepet yüklenemedi.</strong><span>Lütfen tekrar deneyin.</span></div>';
+        }
+    }
+
+    function renderCart(data) {
+        if (!data.items.length) {
+            cartContent.innerHTML = '<div class="mini-cart-empty"><div>☕</div><strong>Sepetiniz boş</strong><span>Menüden bir ürüne dokunarak başlayın.</span></div>';
+            cartFooter.innerHTML = '<a class="button button-primary button-full" href="{{ url_for("order_app") }}">Menüye dön</a>';
+            return;
+        }
+        cartContent.innerHTML = data.items.map(item => `
+            <article class="mini-cart-item" data-cart-code="${item.stok_kodu}">
+                <div><strong>${item.urun_adi}</strong><small>${item.birim_fiyat} TL</small></div>
+                <div class="mini-quantity">
+                    <button type="button" data-cart-action="decrease" data-code="${item.stok_kodu}">−</button>
+                    <span>${item.adet}</span>
+                    <button type="button" data-cart-action="increase" data-code="${item.stok_kodu}">+</button>
+                </div>
+                <strong>${item.satir_toplami} TL</strong>
+            </article>`).join('');
+        cartFooter.innerHTML = `<div class="mini-cart-total"><span>Toplam</span><strong>${data.total} TL</strong></div><a class="button button-primary button-full" href="{{ url_for('payment') }}">Siparişi onayla</a>`;
+    }
+
+    function syncMenuQuantities(data) {
+        const map = Object.fromEntries(data.items.map(item => [item.stok_kodu, item.adet]));
+        document.querySelectorAll('[data-product-code]').forEach(card => {
+            const code = card.dataset.productCode;
+            const quantity = map[code] || 0;
+            card.classList.toggle('is-in-cart', quantity > 0);
+            const count = card.querySelector('[data-product-quantity]');
+            const controls = card.querySelector('.product-inline-quantity');
+            const addLabel = card.querySelector('[data-add-label]');
+            if (count) count.textContent = quantity;
+            if (controls) controls.hidden = quantity <= 0;
+            if (addLabel) addLabel.textContent = quantity > 0 ? 'Sepette' : 'Sepete ekle';
+        });
+    }
+
+    function openCart() { document.getElementById('floating-cart')?.classList.add('is-open'); cart.setAttribute('aria-hidden','false'); loadCart(); }
+    function closeCart() { document.getElementById('floating-cart')?.classList.remove('is-open'); cart.setAttribute('aria-hidden','true'); }
+    const floatingCart = document.getElementById('floating-cart');
+    document.querySelectorAll('[data-cart-open]').forEach(el => el.addEventListener('click', event => {
+        event.stopPropagation();
+        if (floatingCart?.classList.contains('is-open')) closeCart(); else openCart();
+    }));
+    document.querySelectorAll('[data-cart-close]').forEach(el => el.addEventListener('click', closeCart));
+    document.addEventListener('click', event => {
+        if (floatingCart?.classList.contains('is-open') && !floatingCart.contains(event.target)) closeCart();
+    });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') closeCart(); });
+
+    async function changeQuantity(code, operation) {
+        const form = new FormData(); form.append('stok_kodu', code);
+        const endpoint = operation === 'increase' ? '{{ url_for("increase_basket_product") }}' : '{{ url_for("decrease_basket_product") }}';
+        await request(endpoint, {method:'POST', body:form, headers:{'X-Requested-With':'fetch'}});
+        await loadCart();
+    }
+
+    document.addEventListener('click', async event => {
+        const qButton = event.target.closest('[data-cart-action]');
+        if (qButton) { event.preventDefault(); await changeQuantity(qButton.dataset.code, qButton.dataset.cartAction); return; }
+
+        const inline = event.target.closest('[data-inline-action]');
+        if (inline) { event.preventDefault(); event.stopPropagation(); await changeQuantity(inline.dataset.code, inline.dataset.inlineAction); return; }
+
+        const card = event.target.closest('[data-product-code]');
+        if (card && !event.target.closest('button,a,input')) {
+            const form = card.querySelector('form.js-add-to-basket');
+            if (form) form.requestSubmit();
+        }
+    });
+
+    document.querySelectorAll('.js-add-to-basket').forEach(form => {
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+            const button = form.querySelector('button[type="submit"]'); if (button) button.disabled = true;
+            try {
+                const data = await request(form.action, {method:'POST', body:new FormData(form), headers:{'X-Requested-With':'fetch'}});
+                setBasketBadge(data.basket_count); showToast('Ürün sepete eklendi'); await loadCart();
+            } catch (e) { showToast('Ürün sepete eklenemedi'); }
+            finally { if (button) button.disabled = false; }
+        });
+    });
+
+    function setOrderNotificationDot(count) {
+        const dot = document.getElementById('order-notification-dot');
+        if (!dot) return;
+        dot.classList.toggle('is-visible', Number(count) > 0);
+    }
+
+    async function pollOrderNotifications() {
+        try {
+            const data = await request(`{{ url_for('notification_poll') }}?after=${notificationCursor}`);
+            setOrderNotificationDot(data.unread_count);
+            if (notificationInitialized && data.notifications?.length) {
+                data.notifications.forEach((item, index) => {
+                    setTimeout(() => showToast(item.message), index * 500);
+                });
+            }
+            notificationCursor = Number(data.latest_id || notificationCursor || 0);
+            notificationInitialized = true;
+        } catch (error) {
+            // Bildirim kontrolünün geçici olarak başarısız olması ana deneyimi bozmaz.
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setBasketBadge({{ basket_count|default(0)|int }});
+        setOrderNotificationDot({{ unread_notification_count|default(0)|int }});
+        loadCart();
+        pollOrderNotifications();
+        window.setInterval(pollOrderNotifications, 4000);
+    });
+    window.NoirUI = { showToast, setBasketBadge, openCart, loadCart, pollOrderNotifications };
+})();
+</script>
+{% block scripts %}{% endblock %}
+<button class="theme-toggle" id="theme-toggle" type="button" aria-label="Temayı değiştir">
+    <span class="theme-toggle-icon" id="theme-toggle-icon">☀️</span>
+    <span class="theme-toggle-label" id="theme-toggle-label">Açık tema</span>
+</button>
+<script>
+(function(){
+  const root=document.documentElement;
+  const button=document.getElementById('theme-toggle');
+  const icon=document.getElementById('theme-toggle-icon');
+  const label=document.getElementById('theme-toggle-label');
+  function sync(){
+    const light=root.classList.contains('theme-light');
+    if(icon) icon.textContent=light?'🌙':'☀️';
+    if(label) label.textContent=light?'Koyu tema':'Açık tema';
+    if(button) button.setAttribute('aria-label',light?'Koyu temaya geç':'Açık temaya geç');
+  }
+  if(button){
+    button.addEventListener('click',function(){
+      root.classList.toggle('theme-light');
+      const value=root.classList.contains('theme-light')?'light':'dark';
+      try{localStorage.setItem('noir-theme',value);}catch(e){}
+      sync();
+    });
+  }
+  sync();
+})();
+</script></body>
+</html>

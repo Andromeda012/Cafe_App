@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Siparişlerim | Noir Coffee{% endblock %}
+
+{% block content %}
+<section class="page-hero compact-hero">
+    <div>
+        <span class="eyebrow">Sipariş geçmişi</span>
+        <h1>Siparişlerim</h1>
+        <p>Verdiğiniz siparişlerin durumunu ve içeriklerini buradan takip edebilirsiniz.</p>
+    </div>
+    <a class="button button-secondary" href="{{ url_for('order_app') }}">Yeni sipariş ver</a>
+</section>
+
+<section class="customer-orders-section">
+    {% if customer_orders %}
+    <div class="customer-orders-list">
+        {% for customer_order in customer_orders %}
+        <article class="customer-order-card status-card-{{ customer_order.siparis_durumu|lower|replace(' ','-') }}">
+            <div class="customer-order-topline">
+                <div>
+                    <span class="eyebrow">Sipariş #{{ customer_order.siparis_id }}</span>
+                    <h2>Masa {{ customer_order.masa_bilgisi }}</h2>
+                </div>
+                <span class="order-status-pill">{{ customer_order.siparis_durumu }}</span>
+            </div>
+
+            <div class="customer-order-meta">
+                <div><small>Toplam</small><strong>{{ customer_order.toplam_tutar }} TL</strong></div>
+                <div><small>Tarih</small><strong>{{ customer_order.siparis_tarihi|datetime_tr }}</strong></div>
+                <div><small>Servis</small><strong>{{ customer_order.servis_turu }}</strong></div>
+            </div>
+
+            {% if customer_order.can_cancel %}
+            <div class="customer-cancel-window">
+                <div>
+                    <strong>Fikrinizi mi değiştirdiniz?</strong>
+                    <small>Mutfak hazırlığa başlamadan önce siparişi iptal edebilirsiniz.</small>
+                </div>
+                <span class="cancel-countdown" data-cancel-seconds="{{ customer_order.cancel_remaining_seconds }}"></span>
+            </div>
+            {% endif %}
+
+            <div class="customer-order-actions">
+                <a class="button button-secondary button-small" href="{{ url_for('my_order_detail', siparis_id=customer_order.siparis_id) }}">Sipariş detayını gör</a>
+                {% if customer_order.can_edit %}<a class="button button-secondary button-small" href="{{ url_for('edit_my_order', siparis_id=customer_order.siparis_id) }}">Siparişi düzenle</a>{% endif %}
+                {% if customer_order.can_cancel %}
+                <form action="{{ url_for('cancel_my_order', siparis_id=customer_order.siparis_id) }}" method="post" onsubmit="return confirm('Siparişinizi iptal etmek istediğinize emin misiniz?');">
+                    <button class="button button-danger button-small" type="submit">Siparişi iptal et</button>
+                </form>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state customer-orders-empty">
+        <div class="empty-icon">☕</div>
+        <span class="eyebrow">Henüz sipariş yok</span>
+        <h2>İlk siparişinizi vermeye hazırsınız.</h2>
+        <p>Sipariş verdiğinizde durumunu ve geçmişini bu ekrandan takip edebileceksiniz.</p>
+        <a class="button button-primary" href="{{ url_for('order_app') }}">Menüyü incele</a>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('[data-cancel-seconds]').forEach(function (element) {
+    let seconds = Number(element.dataset.cancelSeconds) || 0;
+    function render() {
+        if (seconds <= 0) {
+            element.textContent = 'İptal süresi doldu';
+            const card = element.closest('.customer-order-card');
+            const form = card?.querySelector('form[action*="/cancel"]');
+            if (form) form.remove();
+            return;
+        }
+        const minutes = Math.floor(seconds / 60);
+        const remain = String(seconds % 60).padStart(2, '0');
+        element.textContent = `İptal için ${minutes}:${remain}`;
+        seconds -= 1;
+        setTimeout(render, 1000);
+    }
+    render();
+});
+</script>
+{% endblock %}

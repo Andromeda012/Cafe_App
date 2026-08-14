@@ -1,0 +1,71 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Garsonlar | Noir Coffee{% endblock %}
+
+{% block content %}
+<section class="admin-page-heading">
+    <div>
+        <span class="eyebrow">Servis yönetimi</span>
+        <h1>Garsonlar</h1>
+        <p>Garson hesaplarını yönetin ve servis ekranına erişin.</p>
+    </div>
+    <a class="button button-primary" href="{{ url_for('waiter_login') }}" target="_blank" rel="noopener">Garson Terminalini Aç</a>
+</section>
+
+<section class="waiter-admin-layout">
+    <article class="admin-card waiter-create-card">
+        <span class="eyebrow">Yeni personel</span>
+        <h2>Garson hesabı ekle</h2>
+        <p>Her garson kendi kullanıcı adı ve şifresiyle servis terminaline giriş yapar.</p>
+
+        <form class="stock-form" action="{{ url_for('admin_waiter_add') }}" method="post">
+            <label>
+                <span>Ad Soyad</span>
+                <input type="text" name="full_name" placeholder="Örn. Ayşe Yılmaz" required>
+            </label>
+            <label>
+                <span>Kullanıcı adı</span>
+                <input type="text" name="username" placeholder="Örn. ayse" autocomplete="off" required>
+            </label>
+            <label>
+                <span>Şifre</span>
+                <input type="password" name="password" placeholder="Geçici şifre" autocomplete="new-password" required>
+            </label>
+            <button class="button button-primary button-full" type="submit">Garson Ekle</button>
+        </form>
+    </article>
+
+    <article class="admin-card waiter-list-card">
+        <div class="admin-section-heading">
+            <div>
+                <span class="eyebrow">Personel listesi</span>
+                <h2>Garson hesapları</h2>
+            </div>
+            <small>{{ waiters|length }} hesap</small>
+        </div>
+
+        <div class="waiter-admin-list">
+            {% for waiter in waiters %}
+            <div class="waiter-admin-row {% if not waiter[3] %}is-passive{% endif %}">
+                <div class="waiter-avatar">{{ waiter[2][0]|upper }}</div>
+                <div class="waiter-admin-info">
+                    <strong>{{ waiter[2] }}</strong>
+                    <span>@{{ waiter[1] }}</span>
+                </div>
+                <span class="waiter-state {% if waiter[3] %}is-active{% else %}is-inactive{% endif %}">
+                    {% if waiter[3] %}Aktif{% else %}Pasif{% endif %}
+                </span>
+                <form action="{{ url_for('admin_waiter_toggle', waiter_id=waiter[0]) }}" method="post">
+                    <button class="button button-secondary waiter-toggle-button" type="submit">
+                        {% if waiter[3] %}Pasife Al{% else %}Aktifleştir{% endif %}
+                    </button>
+                </form>
+            </div>
+            {% else %}
+            <div class="placeholder-card">Henüz garson hesabı bulunmuyor.</div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+{% endblock %}

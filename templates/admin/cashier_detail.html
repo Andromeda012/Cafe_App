@@ -1,0 +1,188 @@
+{% extends "admin/base.html" %}
+{% block title %}Fiş #{{ order_header[0] }} | Kasiyer Terminali{% endblock %}
+{% block content %}
+<section class="cashier-detail-heading">
+    <div>
+        <a class="admin-back-link" href="{{ url_for('cashier_terminal') }}">← Kasiyer Terminali</a>
+        <span class="eyebrow">Sipariş #{{ order_header[0] }}</span>
+        <h1>Masa {{ order_header[1] }}</h1>
+        <p>{{ order_header[2] }} · {{ order_header[3] }} · {{ order_header[8] }}</p>
+    </div>
+    <div class="cashier-balance-box">
+        <small>Kalan tutar</small>
+        <strong>{{ remaining }} TL</strong>
+        <span>{{ order_header[6]|datetime_tr }}</span>
+    </div>
+</section>
+
+<section class="cashier-layout">
+    <div class="cashier-receipt admin-panel-card">
+        <div class="cashier-panel-heading">
+            <div><span class="eyebrow">Fiş içeriği</span><h2>Ürünler</h2></div>
+            <span>{{ order_items|length }} satır</span>
+        </div>
+
+        <div class="cashier-item-list">
+        {% for item in order_items %}
+            <article class="cashier-item {% if item[5] <= 0 %}is-paid{% endif %}">
+                <div>
+                    <strong>{{ item[1] }}</strong>
+                    <small>{{ item[2] }} TL · Toplam {{ item[3] }} adet</small>
+                </div>
+                <div class="cashier-item-status">
+                    {% if item[4] %}<small>{{ item[4] }} ödendi</small>{% endif %}
+                    <strong>{% if item[5] > 0 %}{{ item[5] }} kalan · {{ item[6] }} TL{% else %}Ödendi ✓{% endif %}</strong>
+                </div>
+            </article>
+        {% endfor %}
+        </div>
+
+        {% if order_header[9] %}
+        <div class="admin-note-box"><small>Sipariş notu</small><p>{{ order_header[9] }}</p></div>
+        {% endif %}
+
+        {% if payments %}
+        <div class="cashier-payment-history">
+            <span class="eyebrow">Ödeme geçmişi</span>
+            {% for payment in payments %}
+            <div><span>{{ payment[1] }} · {{ payment[3] }}</span><strong>{{ payment[2] }} TL</strong><small>{{ payment[4] or '' }}</small></div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="cashier-actions-column">
+        <section class="cashier-action-card admin-panel-card">
+            <span class="eyebrow">İşlemler</span>
+            <h2>Fiş işlemleri</h2>
+            <button class="button button-secondary button-full" type="button" id="toggle-table-transfer">Masa aktar</button>
+            <form class="cashier-inline-form" id="table-transfer-form" action="{{ url_for('cashier_transfer_table', siparis_id=order_header[0]) }}" method="post" hidden>
+                <label><span>Yeni masa</span>
+                    <select name="table" required>
+                        {% for table in tables %}<option value="{{ table }}" {% if table == order_header[1] %}selected{% endif %}>{{ table }}</option>{% endfor %}
+                    </select>
+                </label>
+                <button class="button button-primary button-full" type="submit">Masayı aktar</button>
+            </form>
+            <button class="button button-secondary button-full" type="button" id="split-receipt-button">Fişi böl</button>
+        </section>
+
+        <section class="cashier-action-card cashier-payment-card admin-panel-card">
+            <span class="eyebrow">Nakit ödeme</span>
+            <h2>Kalan fişi nakit kapat</h2>
+            <p>Kalan {{ remaining }} TL'nin tamamını nakit olarak tahsil eder.</p>
+            <form action="{{ url_for('cashier_pay_order', siparis_id=order_header[0]) }}" method="post">
+                <input type="hidden" name="payment_method" value="Nakit">
+                <button class="button button-primary button-full" type="submit">{{ remaining }} TL Nakit Al</button>
+            </form>
+        </section>
+
+        <section class="cashier-action-card cashier-payment-card admin-panel-card">
+            <span class="eyebrow">POS ödeme</span>
+            <h2>Kalan fişi POS ile kapat</h2>
+            <p>Kalan {{ remaining }} TL'nin tamamını fiziki POS ödemesi olarak kaydeder.</p>
+            <form action="{{ url_for('cashier_pay_order', siparis_id=order_header[0]) }}" method="post">
+                <input type="hidden" name="payment_method" value="POS">
+                <button class="button cashier-pos-button button-full" type="submit">{{ remaining }} TL POS Al</button>
+            </form>
+        </section>
+    </div>
+</section>
+
+<section class="receipt-splitter" id="receipt-splitter" hidden>
+    <div class="receipt-splitter-header">
+        <div><span class="eyebrow">Fişi böl</span><h2>Ödenecek ürünleri ayırın</h2><p>Soldaki ürünlere tıklayarak birer adet ödeme tarafına aktarın. Sağdaki ürüne tıklarsanız geri alabilirsiniz.</p></div>
+        <button type="button" class="mini-cart-close" id="close-splitter">×</button>
+    </div>
+    <div class="receipt-split-grid">
+        <div class="split-column">
+            <div class="split-column-heading"><strong>Fişte kalanlar</strong><span id="remaining-label"></span></div>
+            <div id="split-source"></div>
+        </div>
+        <div class="split-column split-selected-column">
+            <div class="split-column-heading"><strong>Bu ödemeye alınacaklar</strong><span id="selected-total">0 TL</span></div>
+            <div id="split-selected"><div class="split-empty">Henüz ürün seçilmedi.</div></div>
+        </div>
+    </div>
+    <div class="split-payment-actions">
+        <form action="{{ url_for('cashier_pay_order', siparis_id=order_header[0]) }}" method="post" class="split-pay-form">
+            <input type="hidden" name="payment_method" value="Nakit"><input type="hidden" name="payment_items" class="split-payment-items">
+            <button class="button button-primary" type="submit" disabled>Seçileni Nakit Kapat</button>
+        </form>
+        <form action="{{ url_for('cashier_pay_order', siparis_id=order_header[0]) }}" method="post" class="split-pay-form">
+            <input type="hidden" name="payment_method" value="POS"><input type="hidden" name="payment_items" class="split-payment-items">
+            <button class="button cashier-pos-button" type="submit" disabled>Seçileni POS Kapat</button>
+        </form>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const transferToggle = document.getElementById('toggle-table-transfer');
+    const transferForm = document.getElementById('table-transfer-form');
+    transferToggle?.addEventListener('click', () => { transferForm.hidden = !transferForm.hidden; });
+
+    const splitter = document.getElementById('receipt-splitter');
+    const openSplit = document.getElementById('split-receipt-button');
+    const closeSplit = document.getElementById('close-splitter');
+    const source = document.getElementById('split-source');
+    const selectedBox = document.getElementById('split-selected');
+    const totalLabel = document.getElementById('selected-total');
+    const remainingLabel = document.getElementById('remaining-label');
+    const forms = Array.from(document.querySelectorAll('.split-pay-form'));
+
+    const items = [
+        {% for item in order_items if item[5] > 0 %}
+        {id: {{ item[0] }}, name: {{ item[1]|tojson }}, price: {{ item[2] }}, available: {{ item[5] }}},
+        {% endfor %}
+    ];
+    const selected = {};
+
+    function totalSelected() {
+        return items.reduce((sum, item) => sum + (selected[item.id] || 0) * Number(item.price), 0);
+    }
+
+    function render() {
+        source.innerHTML = items.map(item => {
+            const picked = selected[item.id] || 0;
+            const left = item.available - picked;
+            if (left <= 0) return '';
+            return `<button type="button" class="split-item" data-add="${item.id}"><span><strong>${item.name}</strong><small>${item.price} TL</small></span><b>${left} adet →</b></button>`;
+        }).join('') || '<div class="split-empty">Tüm kalan ürünler seçildi.</div>';
+
+        const pickedItems = items.filter(item => (selected[item.id] || 0) > 0);
+        selectedBox.innerHTML = pickedItems.length ? pickedItems.map(item => `
+            <button type="button" class="split-item selected" data-remove="${item.id}"><span><strong>${item.name}</strong><small>${item.price} TL</small></span><b>← ${selected[item.id]} adet</b></button>`).join('') : '<div class="split-empty">Henüz ürün seçilmedi.</div>';
+
+        const payload = Object.fromEntries(Object.entries(selected).filter(([, qty]) => qty > 0));
+        const total = totalSelected();
+        totalLabel.textContent = `${total} TL`;
+        remainingLabel.textContent = `${items.reduce((s,i) => s + i.available, 0) - Object.values(selected).reduce((s,q) => s + q, 0)} adet kaldı`;
+        forms.forEach(form => {
+            form.querySelector('.split-payment-items').value = JSON.stringify(payload);
+            const button = form.querySelector('button');
+            button.disabled = total <= 0;
+            if (total > 0) button.textContent = `${total} TL · ${form.querySelector('[name="payment_method"]').value} Kapat`;
+        });
+    }
+
+    openSplit?.addEventListener('click', () => { splitter.hidden = false; splitter.scrollIntoView({behavior:'smooth', block:'start'}); render(); });
+    closeSplit?.addEventListener('click', () => { splitter.hidden = true; });
+    splitter?.addEventListener('click', event => {
+        const add = event.target.closest('[data-add]');
+        const remove = event.target.closest('[data-remove]');
+        if (add) {
+            const id = Number(add.dataset.add); const item = items.find(i => i.id === id);
+            if ((selected[id] || 0) < item.available) selected[id] = (selected[id] || 0) + 1;
+            render();
+        } else if (remove) {
+            const id = Number(remove.dataset.remove);
+            selected[id] = Math.max(0, (selected[id] || 0) - 1);
+            render();
+        }
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,35 @@
+<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{% block title %}Noir Service{% endblock %}</title><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/waiter.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/renewed-ui.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/noir-dark.css') }}"><script>
+(function(){
+  try {
+    var saved=localStorage.getItem('noir-theme');
+    if(saved==='light') document.documentElement.classList.add('theme-light');
+  } catch(e){}
+})();
+</script></head>
+<body class="waiter-body"><header class="waiter-header"><a class="waiter-brand" href="{{ url_for('waiter_dashboard') if session.get('waiter_id') else url_for('waiter_login') }}"><span class="brand-mark">N</span><div><strong>Noir Service</strong><small>Garson Terminali</small></div></a>{% if session.get('waiter_id') %}<div class="waiter-user"><a class="waiter-admin-switch" href="{{ url_for('admin_dashboard') }}">Yönetim ↗</a><span>{{ session.get('waiter_name') }}</span><a href="{{ url_for('waiter_logout') }}">Çıkış</a></div>{% endif %}</header><main class="waiter-shell">{% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="waiter-alert {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}{% block content %}{% endblock %}</main><button class="theme-toggle" id="theme-toggle" type="button" aria-label="Temayı değiştir">
+    <span class="theme-toggle-icon" id="theme-toggle-icon">☀️</span>
+    <span class="theme-toggle-label" id="theme-toggle-label">Açık tema</span>
+</button>
+<script>
+(function(){
+  const root=document.documentElement;
+  const button=document.getElementById('theme-toggle');
+  const icon=document.getElementById('theme-toggle-icon');
+  const label=document.getElementById('theme-toggle-label');
+  function sync(){
+    const light=root.classList.contains('theme-light');
+    if(icon) icon.textContent=light?'🌙':'☀️';
+    if(label) label.textContent=light?'Koyu tema':'Açık tema';
+    if(button) button.setAttribute('aria-label',light?'Koyu temaya geç':'Açık temaya geç');
+  }
+  if(button){
+    button.addEventListener('click',function(){
+      root.classList.toggle('theme-light');
+      const value=root.classList.contains('theme-light')?'light':'dark';
+      try{localStorage.setItem('noir-theme',value);}catch(e){}
+      sync();
+    });
+  }
+  sync();
+})();
+</script></body></html>

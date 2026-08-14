@@ -1,0 +1,21 @@
+{% extends "waiter/base.html" %}
+{% block title %}Garson Terminali | Noir{% endblock %}
+{% block content %}
+<section class="waiter-welcome"><span class="eyebrow">Servis operasyonu</span><h1>Hoş geldin, {{ waiter_name }}</h1><p>Teslime hazır siparişleri alın ve masaya ulaştırdıktan sonra tamamlayın.</p></section>
+<section class="waiter-section">
+<div class="waiter-section-title"><div><span class="waiter-live-dot"></span><h2>Teslime Hazır</h2></div><span class="waiter-count">{{ ready_orders|length }}</span></div>
+{% if ready_orders %}<div class="waiter-order-grid">{% for order in ready_orders %}<article class="waiter-order-card ready">
+<div class="waiter-order-number">Sipariş #{{ order[0] }}</div><div class="waiter-table-number">{{ order[1] }}</div>
+<div class="waiter-order-info"><span>{{ order[2] }} TL</span><span>{{ order[3] }}</span></div>
+<div class="waiter-card-actions"><a class="button button-secondary" href="{{ url_for('waiter_order_detail', siparis_id=order[0]) }}">İçerik</a><form action="{{ url_for('waiter_claim_order', siparis_id=order[0]) }}" method="post"><button class="button button-primary" type="submit">Siparişi Al</button></form></div>
+</article>{% endfor %}</div>{% else %}<div class="waiter-empty"><strong>Bekleyen sipariş yok.</strong><span>Yeni hazır siparişler burada görünecek.</span></div>{% endif %}
+</section>
+<section class="waiter-section">
+<div class="waiter-section-title"><h2>Benim Teslimatlarım</h2><span class="waiter-count">{{ active_orders|length }}</span></div>
+{% if active_orders %}<div class="waiter-order-grid">{% for order in active_orders %}<article class="waiter-order-card active">
+<div class="waiter-order-number">Sipariş #{{ order[0] }}</div><div class="waiter-table-number">{{ order[1] }}</div>
+<div class="waiter-order-info"><span>{{ order[2] }} TL</span><span>Serviste</span></div>
+<div class="waiter-card-actions"><a class="button button-secondary" href="{{ url_for('waiter_order_detail', siparis_id=order[0]) }}">Detay</a><form action="{{ url_for('waiter_deliver_order', siparis_id=order[0]) }}" method="post"><button class="button waiter-delivered-button" type="submit">Masaya Teslim Edildi</button></form></div>
+</article>{% endfor %}</div>{% else %}<div class="waiter-empty"><strong>Üzerinizde aktif sipariş yok.</strong></div>{% endif %}
+</section>
+{% endblock %}

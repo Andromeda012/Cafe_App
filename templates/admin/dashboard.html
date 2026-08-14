@@ -1,0 +1,42 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Yönetim Terminali | Noir Coffee{% endblock %}
+
+{% block content %}
+<section class="admin-page-heading terminal-heading">
+    <div>
+        <span class="eyebrow">Yönetim merkezi</span>
+        <h1>Yönetim Terminali</h1>
+        <p>Restoranın yönetim araçlarına tek noktadan erişin.</p>
+    </div>
+</section>
+
+<section class="terminal-menu-grid">
+    <a class="terminal-menu-card terminal-menu-card-active" href="{{ url_for('admin_stocks') }}">
+        <span class="terminal-menu-icon">ST</span>
+        <div><span class="eyebrow">Ürün yönetimi</span><h2>Stok Ayarları</h2><p>Yeni stok ekleyin, ürün bilgilerini revize edin veya stok kaydını kaldırın.</p></div>
+        <span class="terminal-menu-arrow">→</span>
+    </a>
+    <a class="terminal-menu-card terminal-menu-card-active" href="{{ url_for('admin_statistics') }}">
+        <span class="terminal-menu-icon">İS</span>
+        <div><span class="eyebrow">Satış analizi</span><h2>İstatistikler</h2><p>Ciroyu, siparişleri, en çok satan ürünleri ve masa yoğunluğunu inceleyin.</p></div>
+        <span class="terminal-menu-arrow">→</span>
+    </a>
+    <a class="terminal-menu-card terminal-menu-card-active" href="{{ url_for('admin_waiters') }}">
+        <span class="terminal-menu-icon">GR</span>
+        <div><span class="eyebrow">Servis yönetimi</span><h2>Garsonlar</h2><p>Garson hesaplarını yönetin ve servis terminaline erişin.</p></div>
+        <span class="terminal-menu-arrow">→</span>
+    </a>
+    <a class="terminal-menu-card terminal-menu-card-active" href="{{ url_for('cashier_terminal') }}">
+        <span class="terminal-menu-icon">KS</span>
+        <div><span class="eyebrow">Ödeme yönetimi</span><h2>Kasiyer Terminali</h2><p>Kasada ödeme işlemleri için ayrılan terminal. İşlevler sonraki aşamada eklenecek.</p></div>
+        <span class="terminal-menu-arrow">→</span>
+    </a>
+
+    <a class="terminal-menu-card terminal-menu-card-active" href="{{ url_for('admin_settings') }}">
+        <span class="terminal-menu-icon">AY</span>
+        <div><span class="eyebrow">Sistem yönetimi</span><h2>Ayarlar</h2><p>Test verilerini temizleyin ve geliştirme ortamı araçlarına erişin.</p></div>
+        <span class="terminal-menu-arrow">→</span>
+    </a>
+</section>
+{% endblock %}

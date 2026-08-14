@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Girişi | Noir Coffee</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body class="admin-login-body">
+<main class="admin-login-card">
+    <a class="brand admin-login-brand" href="{{ url_for('main_menu') }}">
+        <span class="brand-mark">N</span>
+        <span><strong>Noir Coffee</strong><small>Yönetim Paneli</small></span>
+    </a>
+
+    <span class="eyebrow">Yetkili erişimi</span>
+    <h1>Admin girişi</h1>
+    <p>Restoran siparişlerini görüntülemek ve yönetmek için giriş yapın.</p>
+
+    {% if error %}
+        <div class="form-alert">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" class="admin-login-form">
+        <label>
+            <span>Kullanıcı adı</span>
+            <input type="text" name="username" autocomplete="username" required>
+        </label>
+        <label>
+            <span>Şifre</span>
+            <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <button class="button button-primary button-full" type="submit">Giriş yap</button>
+    </form>
+
+    <a class="admin-back-link" href="{{ url_for('main_menu') }}">← Ana sayfaya dön</a>
+</main>
+</body>
+</html>

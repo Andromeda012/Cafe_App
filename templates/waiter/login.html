@@ -1,0 +1,15 @@
+{% extends "waiter/base.html" %}
+{% block title %}Garson Girişi | Noir{% endblock %}
+{% block content %}
+<section class="waiter-login"><div class="waiter-login-card">
+    <span class="eyebrow">Personel erişimi</span><h1>Garson Terminali</h1>
+    <p>Servis ekranına erişmek için hesabınızla giriş yapın.</p>
+    {% if error %}<div class="waiter-alert error">{{ error }}</div>{% endif %}
+    <form method="post">
+        <label><span>Kullanıcı adı</span><input type="text" name="username" autocomplete="username" required></label>
+        <label><span>Şifre</span><input type="password" name="password" autocomplete="current-password" required></label>
+        <button class="button button-primary button-full" type="submit">Terminale giriş yap</button>
+    </form>
+    <small class="demo-login">Demo: garson / 1</small>
+</div></section>
+{% endblock %}

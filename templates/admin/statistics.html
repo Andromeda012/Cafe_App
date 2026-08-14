@@ -1,0 +1,70 @@
+{% extends "admin/base.html" %}
+
+{% block title %}İstatistikler | Noir Coffee Yönetim{% endblock %}
+
+{% block content %}
+<section class="admin-page-heading">
+    <div>
+        <span class="eyebrow">Satış analizi</span>
+        <h1>İstatistikler</h1>
+        <p>Sipariş, ciro, ürün ve masa yoğunluğunu hızlıca takip edin.</p>
+    </div>
+    <a class="button button-secondary" href="{{ url_for('admin_dashboard') }}">Terminale dön</a>
+</section>
+
+<section class="admin-stat-grid statistics-summary-grid">
+    <article class="admin-stat-card"><small>Toplam sipariş</small><strong>{{ stats.total_orders }}</strong><span>Tüm zamanlar</span></article>
+    <article class="admin-stat-card"><small>Toplam ciro</small><strong>{{ '%.0f'|format(stats.total_revenue) }} TL</strong><span>İptaller hariç</span></article>
+    <article class="admin-stat-card"><small>Ortalama sepet</small><strong>{{ '%.0f'|format(stats.average_order) }} TL</strong><span>Sipariş başına</span></article>
+    <article class="admin-stat-card"><small>Bugünkü ciro</small><strong>{{ '%.0f'|format(stats.today_revenue) }} TL</strong><span>{{ stats.today_orders }} sipariş</span></article>
+</section>
+
+<section class="statistics-grid">
+    <article class="admin-content-card statistics-panel statistics-panel-wide">
+        <div class="admin-card-heading">
+            <div><span class="eyebrow">Son 7 gün</span><h2>Günlük performans</h2></div>
+        </div>
+        {% if stats.last_7_days %}
+        <div class="daily-stat-list">
+            {% set max_total = (stats.last_7_days | map(attribute=2) | max) or 1 %}
+            {% for row in stats.last_7_days %}
+            <div class="daily-stat-row">
+                <div class="daily-stat-label"><strong>{{ row[0] }}</strong><small>{{ row[1] }} sipariş</small></div>
+                <div class="daily-stat-track"><span style="width: {{ ((row[2] / max_total) * 100) if max_total else 0 }}%"></span></div>
+                <strong>{{ '%.0f'|format(row[2]) }} TL</strong>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="statistics-empty">Henüz günlük satış verisi yok.</div>
+        {% endif %}
+    </article>
+
+    <article class="admin-content-card statistics-panel">
+        <div class="admin-card-heading"><div><span class="eyebrow">Durumlar</span><h2>Sipariş dağılımı</h2></div></div>
+        <div class="statistics-list">
+            {% for row in stats.status_counts %}
+            <div><span>{{ row[0] }}</span><strong>{{ row[1] }}</strong></div>
+            {% else %}<p class="statistics-empty">Henüz sipariş yok.</p>{% endfor %}
+        </div>
+    </article>
+
+    <article class="admin-content-card statistics-panel">
+        <div class="admin-card-heading"><div><span class="eyebrow">Ürünler</span><h2>En çok satanlar</h2></div></div>
+        <div class="ranking-list">
+            {% for row in stats.top_products %}
+            <div class="ranking-row"><span class="ranking-index">{{ loop.index }}</span><div><strong>{{ row[0] }}</strong><small>{{ row[1] }} adet</small></div><strong>{{ '%.0f'|format(row[2]) }} TL</strong></div>
+            {% else %}<p class="statistics-empty">Henüz ürün satışı yok.</p>{% endfor %}
+        </div>
+    </article>
+
+    <article class="admin-content-card statistics-panel">
+        <div class="admin-card-heading"><div><span class="eyebrow">Masalar</span><h2>En yoğun masalar</h2></div></div>
+        <div class="ranking-list">
+            {% for row in stats.top_tables %}
+            <div class="ranking-row"><span class="ranking-index">{{ loop.index }}</span><div><strong>Masa {{ row[0] }}</strong><small>{{ row[1] }} sipariş</small></div><strong>{{ '%.0f'|format(row[2]) }} TL</strong></div>
+            {% else %}<p class="statistics-empty">Henüz masa verisi yok.</p>{% endfor %}
+        </div>
+    </article>
+</section>
+{% endblock %}

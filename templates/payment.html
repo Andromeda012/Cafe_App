@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Sipariş Bilgileri | Noir Coffee{% endblock %}
+
+{% block content %}
+<section class="page-hero compact-hero">
+    <div>
+        <span class="eyebrow">Son adım</span>
+        <h1>Sipariş bilgilerinizi tamamlayın</h1>
+        <p>Masanızı ve servis tercihinizi seçin; ardından iletişim bilgilerinizi ve varsa sipariş notunuzu ekleyin.</p>
+    </div>
+    <button class="button button-secondary" type="button" data-cart-open>Sepeti görüntüle</button>
+</section>
+
+<section class="checkout-layout table-checkout-layout">
+    <form class="checkout-card" action="{{ url_for('payment') }}" method="post" id="order-confirm-form">
+        <input type="hidden" name="table" id="selected-table-input" value="{{ form_data.table if form_data is defined and form_data else '' }}">
+
+        <div class="selected-table-card" id="selected-table-card">
+            <div>
+                <span class="eyebrow">Seçili masa</span>
+                <strong id="selected-table-label">Henüz masa seçilmedi</strong>
+            </div>
+            <button class="text-button" type="button" id="change-table-button">Masayı değiştir</button>
+        </div>
+
+        <div class="form-section">
+            <div class="form-heading">
+                <span>01</span>
+                <div>
+                    <h2>Servis tercihi</h2>
+                    <p>Siparişinizi garson getirebilir veya self servis olarak teslim noktasından alabilirsiniz.</p>
+                </div>
+            </div>
+
+            <div class="service-choice-grid">
+                <label class="service-choice-card">
+                    <input type="radio" name="service_type" value="Garson Servisi"
+                           {% if form_data.service_type != 'Self Servis' %}checked{% endif %}>
+                    <span class="service-choice-icon">GR</span>
+                    <span>
+                        <strong>Garson Servisi</strong>
+                        <small>Siparişiniz hazır olduğunda bir garson tarafından masanıza getirilir.</small>
+                    </span>
+                    <b>+0 TL</b>
+                </label>
+
+                <label class="service-choice-card">
+                    <input type="radio" name="service_type" value="Self Servis"
+                           {% if form_data.service_type == 'Self Servis' %}checked{% endif %}>
+                    <span class="service-choice-icon">SS</span>
+                    <span>
+                        <strong>Self Servis</strong>
+                        <small>Hazır bildirimi geldiğinde siparişinizi teslim noktasından alırsınız.</small>
+                    </span>
+                    <b>+{{ self_service_fee|int }} TL</b>
+                </label>
+            </div>
+            {% if errors is defined and errors.get('service_type') %}
+                <small class="field-error">{{ errors.get('service_type') }}</small>
+            {% endif %}
+        </div>
+
+        <div class="form-section">
+            <div class="form-heading">
+                <span>02</span>
+                <div>
+                    <h2>İletişim bilgileri</h2>
+                    <p>Sipariş durumunu size doğru şekilde gösterebilmemiz için.</p>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <label>
+                    <span>Ad Soyad</span>
+                    <input type="text" name="name"
+                           value="{{ form_data.name if form_data is defined and form_data else '' }}"
+                           placeholder="Adınız ve soyadınız" autocomplete="name" required>
+                    {% if errors is defined and errors.get('name') %}
+                        <small class="field-error">{{ errors.get('name') }}</small>
+                    {% endif %}
+                </label>
+
+                <label>
+                    <span>Telefon</span>
+                    <input type="tel" name="phone_number"
+                           value="{{ form_data.phone_number if form_data is defined and form_data else '' }}"
+                           placeholder="05xx xxx xx xx" autocomplete="tel" required>
+                    {% if errors is defined and errors.get('phone_number') %}
+                        <small class="field-error">{{ errors.get('phone_number') }}</small>
+                    {% endif %}
+                </label>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="form-heading">
+                <span>03</span>
+                <div>
+                    <h2>Sipariş notu</h2>
+                    <p>Hazırlama ekibinin bilmesi gereken bir detay varsa buraya yazabilirsiniz.</p>
+                </div>
+            </div>
+            <label class="full-field">
+                <span>Notunuz <small>(isteğe bağlı)</small></span>
+                <textarea name="note" rows="5" maxlength="500" placeholder="Örn. Şekersiz olsun, süt ayrı gelsin...">{{ form_data.note if form_data is defined and form_data else '' }}</textarea>
+                {% if errors is defined and errors.get('note') %}<small class="field-error">{{ errors.get('note') }}</small>{% endif %}
+            </label>
+        </div>
+
+        {% if errors is defined and errors.get('table') %}<div class="form-alert">{{ errors.get('table') }}</div>{% endif %}
+        {% if errors is defined and errors.get('general') %}<div class="form-alert">{{ errors.get('general') }}</div>{% endif %}
+
+        <div class="confirmation-total-card">
+            <div><span>Ürünler</span><strong>{{ subtotal|int if subtotal == subtotal|int else subtotal }} TL</strong></div>
+            <div><span>Servis ücreti</span><strong id="service-fee-display">{{ service_fee|int if service_fee == service_fee|int else service_fee }} TL</strong></div>
+            <div class="confirmation-total-final"><span>Toplam</span><strong id="order-total-display">{{ total|int if total == total|int else total }} TL</strong></div>
+        </div>
+
+        <button class="button button-primary button-full" type="submit" id="confirm-order-button">Ödemeye devam et</button>
+        <p class="form-disclaimer">Sipariş oluşturulduktan sonra ödeme yönteminizi seçeceksiniz.</p>
+    </form>
+
+    <aside class="checkout-note order-note-card">
+        <span class="eyebrow">Sipariş akışı</span>
+        <h2>Servis şeklinizi siz seçin.</h2>
+        <p>Self servis siparişler garson terminaline düşmez. Sipariş hazır olduğunda Siparişlerim menüsünde bildirim alırsınız.</p>
+        <ul>
+            <li>Canlı sipariş durumları</li>
+            <li>Hazır olduğunda anlık site bildirimi</li>
+            <li>Garson veya self servis seçimi</li>
+        </ul>
+    </aside>
+</section>
+
+<div class="table-modal" id="table-modal" aria-hidden="true">
+    <div class="table-modal-backdrop"></div>
+    <section class="table-modal-card" role="dialog" aria-modal="true" aria-labelledby="table-modal-title">
+        <div class="table-modal-header"><div><span class="eyebrow">Masa seçimi</span><h2 id="table-modal-title">Nerede oturuyorsunuz?</h2><p>Bulunduğunuz bölümü ve masa numaranızı seçin.</p></div></div>
+        <div class="table-zone">
+            <div class="table-zone-heading"><div><span class="zone-letter">A</span><div><strong>Salon</strong><small>İç mekan masaları</small></div></div></div>
+            <div class="table-grid">{% for table_item in tables if table_item|string|upper|first == 'A' %}<button type="button" class="table-choice" data-table="{{ table_item }}">{{ table_item }}</button>{% endfor %}</div>
+        </div>
+        <div class="table-zone">
+            <div class="table-zone-heading"><div><span class="zone-letter">B</span><div><strong>Bahçe</strong><small>Dış mekan masaları</small></div></div></div>
+            <div class="table-grid">{% for table_item in tables if table_item|string|upper|first == 'B' %}<button type="button" class="table-choice" data-table="{{ table_item }}">{{ table_item }}</button>{% endfor %}</div>
+        </div>
+        <div class="table-modal-footer"><span id="table-modal-status">Bir masa seçin.</span><button class="button button-primary" type="button" id="continue-after-table" disabled>Devam et</button></div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const modal = document.getElementById('table-modal');
+    const hiddenInput = document.getElementById('selected-table-input');
+    const selectedLabel = document.getElementById('selected-table-label');
+    const statusText = document.getElementById('table-modal-status');
+    const continueButton = document.getElementById('continue-after-table');
+    const changeButton = document.getElementById('change-table-button');
+    const form = document.getElementById('order-confirm-form');
+    const choices = Array.from(document.querySelectorAll('.table-choice'));
+    const subtotal = Number({{ subtotal|tojson }});
+    const selfFee = Number({{ self_service_fee|tojson }});
+    const feeDisplay = document.getElementById('service-fee-display');
+    const totalDisplay = document.getElementById('order-total-display');
+
+    function money(value) { return `${Number(value).toLocaleString('tr-TR')} TL`; }
+    function updateServiceTotal() {
+        const selected = document.querySelector('input[name="service_type"]:checked')?.value;
+        const fee = selected === 'Self Servis' ? selfFee : 0;
+        feeDisplay.textContent = money(fee);
+        totalDisplay.textContent = money(subtotal + fee);
+        document.querySelectorAll('.service-choice-card').forEach(card => {
+            card.classList.toggle('is-selected', card.querySelector('input')?.checked);
+        });
+    }
+
+    function openModal() { modal.classList.add('is-open'); modal.setAttribute('aria-hidden', 'false'); document.body.classList.add('modal-open'); }
+    function closeModal() { if (!hiddenInput.value) return; modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); document.body.classList.remove('modal-open'); }
+    function selectTable(tableName) {
+        hiddenInput.value = tableName;
+        selectedLabel.textContent = `Masa ${tableName}`;
+        statusText.textContent = `Masa ${tableName} seçildi.`;
+        continueButton.disabled = false;
+        choices.forEach(button => button.classList.toggle('is-selected', button.dataset.table === tableName));
+    }
+
+    choices.forEach(button => button.addEventListener('click', () => selectTable(button.dataset.table)));
+    continueButton.addEventListener('click', closeModal);
+    changeButton.addEventListener('click', openModal);
+    document.querySelectorAll('input[name="service_type"]').forEach(input => input.addEventListener('change', updateServiceTotal));
+
+    form.addEventListener('submit', function (event) {
+        if (!hiddenInput.value) {
+            event.preventDefault(); openModal();
+            if (window.NoirUI) window.NoirUI.showToast('Lütfen önce masanızı seçin.');
+        }
+    });
+
+    if (hiddenInput.value) selectTable(hiddenInput.value); else openModal();
+    updateServiceTotal();
+})();
+</script>
+{% endblock %}

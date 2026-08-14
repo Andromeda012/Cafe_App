@@ -1,0 +1,78 @@
+{% extends "admin/base.html" %}
+{% block title %}Mutfak Terminali | Noir Coffee Yönetim{% endblock %}
+{% block content %}
+<section class="admin-page-heading">
+    <div>
+        <span class="eyebrow">Mutfak operasyonu</span>
+        <h1>Mutfak Terminali</h1>
+        <p>Yeni siparişi mutfak kabul eder, hazırlığı başlatır ve hazır olduğunda garson havuzuna aktarır.</p>
+    </div>
+</section>
+
+<section class="admin-stat-grid operation-stats five-stats">
+    <article class="admin-stat-card status-new"><small>Yeni</small><strong>{{ stats.new_count }}</strong></article>
+    <article class="admin-stat-card status-preparing"><small>Hazırlanıyor</small><strong>{{ stats.preparing_count }}</strong></article>
+    <article class="admin-stat-card status-ready"><small>Hazır / bekliyor</small><strong>{{ stats.ready_count }}</strong></article>
+    <article class="admin-stat-card status-waiter"><small>Garsonda</small><strong>{{ stats.waiter_count }}</strong></article>
+    <article class="admin-stat-card"><small>Bugünkü toplam</small><strong>{{ stats.today_total }} TL</strong></article>
+</section>
+
+<section class="admin-orders-section">
+    <div class="admin-section-heading">
+        <div><span class="eyebrow">Canlı mutfak</span><h2>Aktif siparişler</h2></div>
+        <small>Yeni siparişleri kabul edin; hazırlanan siparişleri servise çıkarın.</small>
+    </div>
+
+    {% if orders %}
+    <div class="operation-order-grid renewed-operation-grid">
+        {% for order in orders %}
+        {% set status=order[3] %}
+        {% set service=order[5] %}
+        {% if status=='Yeni' %}{% set state_class='status-new' %}
+        {% elif status=='Hazırlanıyor' %}{% set state_class='status-preparing' %}
+        {% elif status=='Hazır' %}{% set state_class='status-ready' %}
+        {% elif status=='Garsona Teslim Edildi' %}{% set state_class='status-waiter' %}
+        {% elif status=='Teslim Edildi' %}{% set state_class='status-delivered' %}
+        {% else %}{% set state_class='status-cancelled' %}{% endif %}
+
+        <article class="operation-order-card {{ state_class }}">
+            <div class="operation-order-accent"></div>
+            <div class="operation-order-topline">
+                <div><span class="eyebrow">Sipariş #{{ order[0] }}</span><h3>Masa {{ order[1] }}</h3></div>
+                <div class="operation-badges"><span class="operation-service-pill{% if service == 'Self Servis' %} is-self-service{% endif %}">{{ service }}</span><span class="operation-status-pill">{{ status }}</span></div>
+            </div>
+            <div class="operation-order-meta">
+                <div><small>Toplam</small><strong>{{ order[2] }} TL</strong></div>
+                <div><small>Oluşturulma</small><strong>{{ order[4]|datetime_tr }}</strong></div>
+            </div>
+            <div class="operation-order-actions">
+                <a class="button button-secondary button-small" href="{{ url_for('admin_order_detail', siparis_id=order[0]) }}">İçeriği gör</a>
+                {% if status=='Yeni' %}
+                <form action="{{ url_for('admin_order_status', siparis_id=order[0]) }}" method="post">
+                    <input type="hidden" name="siparis_durumu" value="Hazırlanıyor">
+                    <button class="button button-primary button-small" type="submit">Hazırlamaya başla</button>
+                </form>
+                {% elif status=='Hazırlanıyor' %}
+                <form action="{{ url_for('admin_order_status', siparis_id=order[0]) }}" method="post">
+                    <input type="hidden" name="siparis_durumu" value="Hazır">
+                    <button class="button button-primary button-small" type="submit">Sipariş hazır</button>
+                </form>
+                {% elif status=='Hazır' %}
+                {% if service == 'Self Servis' %}<span class="kitchen-state-note self-service-note">Müşteriye hazır bildirimi gönderildi · Teslim noktasından alınacak</span>{% else %}<span class="kitchen-state-note">Garsonun kabul etmesi bekleniyor</span>{% endif %}
+                {% elif status=='Garsona Teslim Edildi' %}
+                <span class="kitchen-state-note">Sipariş garsonda</span>
+                {% endif %}
+                {% if status in ['Teslim Edildi','İptal Edildi'] %}
+                <form action="{{ url_for('admin_order_archive', siparis_id=order[0]) }}" method="post">
+                    <button class="button operation-remove-button button-small" type="submit">Listeden kaldır</button>
+                </form>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state admin-empty-state"><div class="empty-icon">☕</div><h2>Aktif sipariş yok</h2><p>Yeni siparişler burada bekleyecek; mutfak kabul ettiğinde hazırlık başlayacak.</p></div>
+    {% endif %}
+</section>
+{% endblock %}

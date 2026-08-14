@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Sepetim | Noir Coffee{% endblock %}
+
+{% block content %}
+<section class="page-hero compact-hero">
+    <div>
+        <span class="eyebrow">Sipariş özeti</span>
+        <h1>Sepetiniz</h1>
+        <p>Adetleri düzenleyebilir ve siparişinizi sipariş onayına taşıyabilirsiniz.</p>
+    </div>
+    <a class="button button-secondary" href="{{ url_for('order_app') }}">Menüye dön</a>
+</section>
+
+<section class="basket-layout">
+    <div class="basket-panel">
+        {% if added_stoks %}
+        <div class="basket-list">
+            {% for added_stok in added_stoks %}
+            <article class="basket-item" id="basket-item-{{ added_stok[2] }}">
+                <div class="basket-product-icon" aria-hidden="true">☕</div>
+
+                <div class="basket-product-info">
+                    <span>{{ added_stok[2] }}</span>
+                    <h2>{{ added_stok[0] }}</h2>
+                    <p>Birim fiyat: {{ added_stok[1] }} TL</p>
+                </div>
+
+                <div class="quantity-control" aria-label="Ürün adedi">
+                    <form class="quantity-form" data-operation="decrease" action="{{ url_for('decrease_basket_product') }}" method="post">
+                        <input type="hidden" name="stok_kodu" value="{{ added_stok[2] }}">
+                        <button type="submit" aria-label="Adedi azalt">−</button>
+                    </form>
+
+                    <strong id="quantity-{{ added_stok[2] }}" data-quantity>{{ added_stok[3] }}</strong>
+
+                    <form class="quantity-form" data-operation="increase" action="{{ url_for('increase_basket_product') }}" method="post">
+                        <input type="hidden" name="stok_kodu" value="{{ added_stok[2] }}">
+                        <button type="submit" aria-label="Adedi artır">+</button>
+                    </form>
+                </div>
+
+                <strong class="line-price" id="line-price-{{ added_stok[2] }}" data-price="{{ added_stok[1] }}">
+                    {{ added_stok[1] * added_stok[3] }} TL
+                </strong>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state basket-empty">
+            <div class="empty-icon">☕</div>
+            <h2>Sepetiniz henüz boş</h2>
+            <p>Menüden sevdiğiniz kahveleri ekleyerek siparişinizi oluşturabilirsiniz.</p>
+            <a class="button button-primary" href="{{ url_for('order_app') }}">Menüyü incele</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <aside class="summary-card">
+        <span class="eyebrow">Sipariş toplamı</span>
+        <div class="summary-row">
+            <span>Ara toplam</span>
+            <strong class="basket-total">{{ total }} TL</strong>
+        </div>
+        <div class="summary-row muted-row">
+            <span>Servis</span>
+            <strong>Ücretsiz</strong>
+        </div>
+        <div class="summary-total">
+            <span>Toplam</span>
+            <strong class="basket-total">{{ total }} TL</strong>
+        </div>
+
+        {% if added_stoks %}
+        <a class="button button-primary button-full" href="{{ url_for('payment') }}">Siparişi onayla</a>
+        {% else %}
+        <span class="button button-disabled button-full">Siparişi onayla</span>
+        {% endif %}
+
+        <p class="secure-note">Siparişiniz onaylandıktan sonra hazırlanır.</p>
+    </aside>
+</section>
+{% endblock %}

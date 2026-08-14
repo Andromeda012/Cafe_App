@@ -1,0 +1,36 @@
+{% extends "admin/base.html" %}
+{% block title %}Kasiyer Terminali | Noir Coffee{% endblock %}
+{% block content %}
+<section class="admin-page-hero cashier-hero">
+    <div>
+        <span class="eyebrow">Ödeme operasyonu</span>
+        <h1>Kasiyer Terminali</h1>
+        <p>Yalnızca müşteriye teslim edilmiş ve ödemesi tamamlanmamış siparişler burada görünür. Böylece teslim edilmemiş siparişlerin ödemesi kasadan alınamaz.</p>
+    </div>
+    <div class="cashier-count-card"><small>Bekleyen fiş</small><strong>{{ orders|length }}</strong></div>
+</section>
+
+<section class="cashier-order-grid">
+{% for order in orders %}
+    <a class="cashier-order-card" href="{{ url_for('cashier_order_detail', siparis_id=order[0]) }}">
+        <div class="cashier-order-topline">
+            <span class="eyebrow">Sipariş #{{ order[0] }}</span>
+            <span class="cashier-payment-pill">{{ order[4] }}</span>
+        </div>
+        <strong class="cashier-table">Masa {{ order[1] }}</strong>
+        <div class="cashier-order-meta">
+            <div><small>Fiş toplamı</small><strong>{{ order[2] }} TL</strong></div>
+            <div><small>Kalan</small><strong>{{ order[6] }} TL</strong></div>
+        </div>
+        <span class="cashier-open-label">Fişi aç →</span>
+    </a>
+{% else %}
+    <div class="admin-empty-state cashier-empty">
+        <div class="empty-icon">✓</div>
+        <span class="eyebrow">Kasa temiz</span>
+        <h2>Bekleyen ödeme yok.</h2>
+        <p>Teslim edilmiş, ödenmemiş veya kısmi ödenmiş siparişler burada görünecek.</p>
+    </div>
+{% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ code }} | Noir Coffee{% endblock %}
+{% block content %}
+<section class="page-hero compact-hero">
+    <div>
+        <span class="eyebrow">Hata {{ code }}</span>
+        <h1>{{ title }}</h1>
+        <p>{{ message }}</p>
+    </div>
+    <a class="button button-primary" href="{{ url_for('main_menu') }}">Ana sayfaya dön</a>
+</section>
+{% endblock %}

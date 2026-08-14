@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Sipariş #{{ siparis_id }} Düzenle | Noir Coffee{% endblock %}
+{% block content %}
+<section class="page-hero compact-hero"><div><span class="eyebrow">Sipariş düzenleme</span><h1>Sipariş #{{ siparis_id }}</h1><p>Mutfak hazırlığa başlamadan önce ürünlerinizi ve servis tercihinizi değiştirebilirsiniz.</p></div><a class="button button-secondary" href="{{ url_for('my_order_detail', siparis_id=siparis_id) }}">Geri dön</a></section>
+{% if errors.general %}<div class="form-alert">{{ errors.general }}</div>{% endif %}
+<form method="post" class="order-edit-layout">
+<section class="order-edit-card"><div class="detail-heading-row"><div><span class="eyebrow">Menü</span><h2>Ürünler</h2></div><span class="kitchen-state-note">Sadece “Yeni” durumunda düzenlenebilir</span></div>
+<div class="edit-product-grid">
+{% for stock in stocks %}{% set code=stock[2] %}{% set qty=current.get(code,0) %}<article class="edit-product-card{% if qty %} is-selected{% endif %}"><img src="{{ url_for('static', filename='images/products/' ~ code ~ '.jpg') }}" alt="{{ stock[0] }}"><div><span class="eyebrow">{{ code }}</span><h3>{{ stock[0] }}</h3><strong>{{ stock[1] }} TL</strong></div><label><span>Adet</span><input type="number" name="qty_{{ code }}" value="{{ qty }}" min="0" max="99"></label></article>{% endfor %}
+</div></section>
+<aside class="order-edit-side"><div class="order-edit-card"><span class="eyebrow">Servis</span><h2>Nasıl teslim edilsin?</h2><div class="edit-service-options"><label class="service-choice-card"><input type="radio" name="service_type" value="Garson Servisi" {% if service_type == 'Garson Servisi' %}checked{% endif %}><span><b>Garson Servisi</b><small>Ek servis ücreti yok.</small></span></label><label class="service-choice-card"><input type="radio" name="service_type" value="Self Servis" {% if service_type == 'Self Servis' %}checked{% endif %}><span><b>Self Servis · +50 TL</b><small>Hazır olduğunda bildirim gelir.</small></span></label></div><label class="edit-note-field"><span>Not</span><textarea name="note" maxlength="500" rows="5">{{ note }}</textarea></label><button class="button button-primary button-full" type="submit">Değişiklikleri kaydet</button></div></aside>
+</form>
+{% endblock %}
