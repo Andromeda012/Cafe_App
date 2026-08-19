@@ -120,7 +120,6 @@ def _create_new_order_tables(cursor):
     )
 
 
-
 def ensure_order_archive_column(cursor):
     if _table_exists(cursor, "siparis_detaylari"):
         cols = set(_column_names(cursor, "siparis_detaylari"))
@@ -128,6 +127,7 @@ def ensure_order_archive_column(cursor):
             cursor.execute(
                 "ALTER TABLE siparis_detaylari ADD COLUMN arsivlendi INTEGER NOT NULL DEFAULT 0"
             )
+
 
 def migrate_legacy_order_tables(conn, cursor):
     """
@@ -217,7 +217,6 @@ def migrate_legacy_order_tables(conn, cursor):
     conn.commit()
 
 
-
 def ensure_payment_columns(cursor):
     """Eski veritabanlarına ödeme alanlarını güvenli biçimde ekler."""
     if not _table_exists(cursor, "siparis_detaylari"):
@@ -246,6 +245,7 @@ def normalize_order_statuses(cursor):
                          AND garson_id IS NULL"""
                 )
 
+
 def seed_tables(cursor):
     cursor.executemany(
         """
@@ -254,7 +254,6 @@ def seed_tables(cursor):
         """,
         DEFAULT_TABLES,
     )
-
 
 
 def create_waiter_tables(cursor):
@@ -291,8 +290,6 @@ def create_demo_waiter(cursor):
             """,
             ("garson", generate_password_hash("1"), "Demo Garson"),
         )
-
-
 
 
 def ensure_cashier_tables(cursor):
@@ -406,12 +403,37 @@ def reset_test_order_data():
         conn.close()
 
 
+def insert_data(cursor):
+    stoklar = [
+        ("ST00001", "Latte", 100, 0),
+        ("ST00002", "Americano", 120, 0),
+        ("ST00003", "Caramel Latte", 120, 0),
+        ("ST00004", "Vanilla Latte", 150, 0),
+        ("ST00005", "White Mocha", 130, 0),
+        ("ST00006", "Mocha", 120, 0),
+        ("ST00007", "Espresso", 160, 0),
+        ("ST00008", "Cappuccino", 160, 0),
+        ("ST00009", "Filtre Kahve", 100, 0),
+        ("ST00010", "Türk Kahvesi", 100, 0),
+    ]
+
+    cursor.executemany(
+        """
+        INSERT OR IGNORE INTO stok_listesi
+            (stok_kodu, stok_adı, fiyat, adet)
+        VALUES (?, ?, ?, ?)
+        """,
+        stoklar,
+    )
+
+
 def initialize_database():
     conn, cursor = connect_database()
     try:
         create_stock_table(cursor)
         create_tables_table(cursor)
         seed_tables(cursor)
+        insert_data(cursor)
         conn.commit()
 
         migrate_legacy_order_tables(conn, cursor)
@@ -462,27 +484,3 @@ def is_active_table(masa_kodu):
         return cursor.fetchone() is not None
     finally:
         conn.close()
-
-
-def insert_data(cursor):
-    stoklar = [
-        ("ST00001", "Latte", 100, 0),
-        ("ST00002", "Americano", 120, 0),
-        ("ST00003", "Caramel Latte", 120, 0),
-        ("ST00004", "Vanilla Latte", 150, 0),
-        ("ST00005", "White Mocha", 130, 0),
-        ("ST00006", "Mocha", 120, 0),
-        ("ST00007", "Espresso", 160, 0),
-        ("ST00008", "Cappuccino", 160, 0),
-        ("ST00009", "Filtre Kahve", 100, 0),
-        ("ST00010", "Türk Kahvesi", 100, 0),
-    ]
-
-    cursor.executemany(
-        """
-        INSERT OR IGNORE INTO stok_listesi
-            (stok_kodu, stok_adı, fiyat, adet)
-        VALUES (?, ?, ?, ?)
-        """,
-        stoklar,
-    )
