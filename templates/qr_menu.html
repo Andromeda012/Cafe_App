@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}QR Menüleri | Noir Coffee{% endblock %}
+{% block content %}
+<section class="page-hero compact-hero qr-page-hero">
+  <div><span class="eyebrow">Masa QR sistemi</span><h1>Her masa için ayrı QR kod.</h1><p>QR kodu ilgili masaya yerleştirin. Müşteri kodu okuttuğunda masa otomatik seçilir ve doğrudan sipariş ekranına geçer.</p></div>
+  <button class="button button-secondary" type="button" data-qr-open>QR menüyü aç</button>
+</section>
+<section class="qr-page-grid">
+  {% for table_item in qr_tables %}
+  <article class="qr-table-card qr-page-card">
+    <div class="qr-table-label"><span class="zone-letter">{{ table_item|string|upper|first }}</span><div><strong>Masa {{ table_item }}</strong><small>{{ 'Salon' if table_item|string|upper|first == 'A' else 'Bahçe' }}</small></div></div>
+    <img src="{{ url_for('qr_code', table=table_item) }}" alt="Masa {{ table_item }} QR kodu">
+    <a class="button button-secondary" href="{{ url_for('qr_code', table=table_item) }}" download="noir-masa-{{ table_item }}.png">QR'ı kaydet</a>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}

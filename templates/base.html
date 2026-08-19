@@ -43,11 +43,12 @@
     <footer class="site-footer"><div><strong>Noir Coffee</strong><p>Özenle seçilmiş çekirdekler, sakin bir atmosfer ve iyi kahve.</p></div><span>© 2026 Noir Coffee</span></footer>
 </div>
 
-<div class="floating-cart" id="floating-cart">
-    <button class="floating-cart-trigger basket-link" type="button" data-cart-open aria-label="Sepeti aç">
-        <span class="floating-cart-icon">🛒</span>
-        {% if basket_count %}<span class="nav-badge">{{ basket_count }}</span>{% endif %}
-    </button>
+<div class="floating-actions" aria-label="Hızlı işlemler">
+    <div class="floating-cart" id="floating-cart">
+        <button class="floating-action-button floating-cart-trigger basket-link" type="button" data-cart-open aria-label="Sepeti aç">
+            <span class="floating-cart-icon">🛒</span>
+            {% if basket_count %}<span class="nav-badge">{{ basket_count }}</span>{% endif %}
+        </button>
     <aside class="mini-cart floating-mini-cart" id="mini-cart" aria-hidden="true">
         <div class="mini-cart-header">
             <div><span class="eyebrow">Hızlı sepet</span><h2>Siparişiniz</h2></div>
@@ -56,6 +57,43 @@
         <div class="mini-cart-content" id="mini-cart-content"><div class="mini-cart-loading">Sepet hazırlanıyor…</div></div>
         <div class="mini-cart-footer" id="mini-cart-footer"></div>
     </aside>
+    </div>
+
+    <button class="floating-action-button qr-menu-trigger" type="button" data-qr-open aria-label="QR menüyü aç">
+        <span>▦</span>
+    </button>
+    <button class="floating-action-button theme-toggle floating-theme-toggle" id="theme-toggle" type="button" aria-label="Temayı değiştir">
+        <span class="theme-toggle-icon" id="theme-toggle-icon">☀️</span>
+    </button>
+</div>
+
+<div class="qr-scanner-overlay qr-menu-overlay" id="qr-scanner-overlay" aria-hidden="true">
+    <div class="qr-scanner-card qr-menu-card" role="dialog" aria-modal="true" aria-labelledby="qr-scanner-title">
+        <div class="qr-scanner-header">
+            <div><span class="eyebrow">Masa QR menüleri</span><h2 id="qr-scanner-title">Her masa için ayrı QR kod</h2><p class="qr-menu-intro">QR kodu ilgili masaya yerleştirin. Okutulduğunda masa otomatik seçilir ve müşteri doğrudan sipariş ekranına gider.</p></div>
+            <button type="button" class="qr-scanner-close" data-qr-close aria-label="QR menüyü kapat">×</button>
+        </div>
+        <div class="qr-menu-toolbar">
+            <button type="button" class="button button-secondary" id="start-qr-scanner">📷 QR kod okut</button>
+            <span>12 aktif masa</span>
+        </div>
+        <div class="qr-table-grid">
+            {% for table_item in qr_tables %}
+            <article class="qr-table-card">
+                <div class="qr-table-label">
+                    <span class="zone-letter">{{ table_item|string|upper|first }}</span>
+                    <div><strong>Masa {{ table_item }}</strong><small>{{ 'Salon' if table_item|string|upper|first == 'A' else 'Bahçe' }}</small></div>
+                </div>
+                <img src="{{ url_for('qr_code', table=table_item) }}" alt="Masa {{ table_item }} QR kodu" loading="lazy">
+                <a class="qr-download-link" href="{{ url_for('qr_code', table=table_item) }}" download="noir-masa-{{ table_item }}.png">QR'ı kaydet</a>
+            </article>
+            {% endfor %}
+        </div>
+        <div class="qr-reader-section" id="qr-reader-section" hidden>
+            <div id="qr-reader" class="qr-reader"></div>
+            <p class="qr-scanner-status" id="qr-scanner-status">Kamerayı açmak için izin verin. QR kodu algılandığında sipariş ekranına yönlendirileceksiniz.</p>
+        </div>
+    </div>
 </div>
 
 <div class="toast" id="site-toast" role="status" aria-live="polite"></div>
@@ -219,31 +257,83 @@
 })();
 </script>
 {% block scripts %}{% endblock %}
-<button class="theme-toggle" id="theme-toggle" type="button" aria-label="Temayı değiştir">
-    <span class="theme-toggle-icon" id="theme-toggle-icon">☀️</span>
-    <span class="theme-toggle-label" id="theme-toggle-label">Açık tema</span>
-</button>
+<script src="https://unpkg.com/html5-qrcode" defer></script>
 <script>
 (function(){
   const root=document.documentElement;
-  const button=document.getElementById('theme-toggle');
-  const icon=document.getElementById('theme-toggle-icon');
-  const label=document.getElementById('theme-toggle-label');
-  function sync(){
+  const themeButton=document.getElementById('theme-toggle');
+  const themeIcon=document.getElementById('theme-toggle-icon');
+  function syncTheme(){
     const light=root.classList.contains('theme-light');
-    if(icon) icon.textContent=light?'🌙':'☀️';
-    if(label) label.textContent=light?'Koyu tema':'Açık tema';
-    if(button) button.setAttribute('aria-label',light?'Koyu temaya geç':'Açık temaya geç');
+    if(themeIcon) themeIcon.textContent=light?'🌙':'☀️';
+    if(themeButton) themeButton.setAttribute('aria-label',light?'Koyu temaya geç':'Açık temaya geç');
   }
-  if(button){
-    button.addEventListener('click',function(){
-      root.classList.toggle('theme-light');
-      const value=root.classList.contains('theme-light')?'light':'dark';
-      try{localStorage.setItem('noir-theme',value);}catch(e){}
-      sync();
+  themeButton?.addEventListener('click',function(){
+    root.classList.toggle('theme-light');
+    try{localStorage.setItem('noir-theme',root.classList.contains('theme-light')?'light':'dark');}catch(e){}
+    syncTheme();
+  });
+  syncTheme();
+
+  const overlay=document.getElementById('qr-scanner-overlay');
+  const status=document.getElementById('qr-scanner-status');
+  const scannerSection=document.getElementById('qr-reader-section');
+  const scannerButton=document.getElementById('start-qr-scanner');
+  let scanner=null;
+  let scanning=false;
+  function openQr(){
+    if(!overlay) return;
+    overlay.classList.add('is-open');
+    overlay.setAttribute('aria-hidden','false');
+    document.body.classList.add('modal-open');
+    scannerSection?.setAttribute('hidden','');
+  }
+  async function stopScanner(){
+    if(scanner && scanning){
+      try{await scanner.stop();}catch(e){}
+      try{await scanner.clear();}catch(e){}
+    }
+    scanning=false; scanner=null;
+  }
+  async function closeQr(){
+    await stopScanner();
+    overlay?.classList.remove('is-open');
+    overlay?.setAttribute('aria-hidden','true');
+    document.body.classList.remove('modal-open');
+    scannerSection?.setAttribute('hidden','');
+  }
+  function handleQr(decodedText){
+    if(!decodedText || !scanning) return;
+    scanning=false;
+    if(status) status.textContent='QR kodu okundu. Masa seçildi, sipariş ekranı açılıyor…';
+    let target='{{ url_for("order_app") }}';
+    try{
+      const url=new URL(decodedText,window.location.origin);
+      if(url.origin===window.location.origin && url.pathname==='/order'){
+        target=url.pathname+url.search+url.hash;
+      }
+    }catch(e){}
+    stopScanner().finally(()=>{window.location.href=target;});
+  }
+  function startScanner(){
+    if(!overlay?.classList.contains('is-open') || typeof Html5Qrcode==='undefined') return;
+    scannerSection?.removeAttribute('hidden');
+    if(status) status.textContent='Kamera hazırlanıyor…';
+    const reader=document.getElementById('qr-reader');
+    scanner=new Html5Qrcode('qr-reader');
+    scanner.start({facingMode:'environment'},{fps:10,qrbox:{width:240,height:240}},handleQr,()=>{}).then(()=>{
+      scanning=true;
+      if(status) status.textContent='Masa QR kodunu kameranın çerçevesine hizalayın.';
+    }).catch(()=>{
+      if(status) status.textContent='Kamera açılamadı. Tarayıcınızın kamera iznini kontrol edin.';
     });
   }
-  sync();
+  document.querySelector('[data-qr-open]')?.addEventListener('click',openQr);
+  document.querySelector('[data-qr-close]')?.addEventListener('click',closeQr);
+  scannerButton?.addEventListener('click',startScanner);
+  overlay?.addEventListener('click',e=>{if(e.target===overlay) closeQr();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape') closeQr();});
 })();
-</script></body>
+</script>
+</body>
 </html>

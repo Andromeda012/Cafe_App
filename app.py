@@ -1,11 +1,13 @@
 import os
 import uuid
 import json
+from io import BytesIO
 from datetime import datetime, timedelta
 from functools import wraps
 
 import flask
 import pydantic
+import qrcode
 
 import basket_page
 import database
@@ -128,6 +130,7 @@ def inject_global_ui_data():
     guest_id = get_guest_id()
     return {
         "basket_count": sum(int(value) for value in basket.values()),
+        "qr_tables": database.get_active_tables(),
         "admin_logged_in": bool(flask.session.get("admin_logged_in")),
         "unread_notification_count": order_service.get_unread_notification_count(guest_id),
     }
@@ -146,6 +149,15 @@ def main_menu():
 def order_app():
     basket = get_basket()
 
+    # QR kodları /order?table=A1 biçiminde gelir. Geçerli masa ise
+    # oturumda saklanır; müşteri daha sonra ödeme adımına geçtiğinde
+    # masa seçimi tekrar sorulmaz.
+    if flask.request.method == "GET":
+        qr_table = (flask.request.args.get("table") or "").strip().upper()
+        if qr_table and database.is_active_table(qr_table):
+            flask.session["qr_table"] = qr_table
+            flask.session.modified = True
+
     if flask.request.method == "POST":
         stok_kodu = flask.request.form.get("stok_kodu")
         basket_page.add_product(basket, stok_kodu)
@@ -161,6 +173,30 @@ def order_app():
 
     stocks = order.get_stok()
     return flask.render_template("order.html", stocks=stocks)
+
+
+@app.route("/qr-menu")
+def qr_menu():
+    """Tüm aktif masalar için masa-özel QR kodlarını gösterir."""
+    tables = database.get_active_tables()
+    return flask.render_template("qr_menu.html", tables=tables)
+
+
+@app.route("/qr-code/<table>")
+def qr_code(table):
+    """Belirli masaya ait, sipariş ekranına yönlendiren QR PNG üretir."""
+    table = table.strip().upper()
+    if not database.is_active_table(table):
+        return flask.abort(404)
+
+    target = flask.url_for("order_app", table=table, _external=True)
+    image = qrcode.make(target)
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+    buffer.seek(0)
+    response = flask.send_file(buffer, mimetype="image/png", max_age=0)
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.route("/basket")
@@ -257,7 +293,7 @@ def payment():
     form_data = {
         "name": "",
         "phone_number": "",
-        "table": "",
+        "table": flask.session.get("qr_table", ""),
         "note": "",
         "service_type": ServiceType.WAITER.value,
     }
@@ -301,6 +337,7 @@ def payment():
 
                 siparis_id = order_service.create_order(order_data, added_stoks)
                 save_basket({})
+                flask.session.pop("qr_table", None)
 
                 return flask.redirect(
                     flask.url_for("checkout", siparis_id=siparis_id)
