@@ -1,13 +1,13 @@
 import os
 import uuid
 import json
-from io import BytesIO
 from datetime import datetime, timedelta
 from functools import wraps
 
 import flask
 import pydantic
 import qrcode
+from qrcode.image.svg import SvgPathImage
 
 import basket_page
 import database
@@ -179,7 +179,7 @@ def order_app():
 def qr_menu():
     """Tüm aktif masalar için masa-özel QR kodlarını gösterir."""
     tables = database.get_active_tables()
-    return flask.render_template("qr_menu.html", tables=tables)
+    return flask.render_template("qr_menu.html", qr_tables=tables)
 
 
 @app.route("/qr-code/<table>")
@@ -190,12 +190,25 @@ def qr_code(table):
         return flask.abort(404)
 
     target = flask.url_for("order_app", table=table, _external=True)
-    image = qrcode.make(target)
-    buffer = BytesIO()
-    image.save(buffer, format="PNG")
-    buffer.seek(0)
-    response = flask.send_file(buffer, mimetype="image/png", max_age=0)
-    response.headers["Cache-Control"] = "no-store"
+
+    # SVG kullanıyoruz: Pillow gerektirmeden QR üretir ve tarayıcılar
+    # tarafından doğrudan görüntülenebilir. Böylece local ortamda
+    # qrcode kurulu olduğu halde QR görselinin üretilememesi sorunu
+    # ortadan kalkar. SVG ayrıca baskıda PNG'den daha nettir.
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=10,
+        border=4,
+        image_factory=SvgPathImage,
+    )
+    qr.add_data(target)
+    qr.make(fit=True)
+    image = qr.make_image()
+    svg_data = image.to_string()
+
+    response = flask.Response(svg_data, mimetype="image/svg+xml")
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     return response
 
 

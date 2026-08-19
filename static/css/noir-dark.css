@@ -1111,3 +1111,131 @@ html.theme-light .qr-download-link{color:#785728!important;}
 @media (max-width:1000px){.qr-table-grid,.qr-page-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
 @media (max-width:720px){.qr-table-grid,.qr-page-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.qr-menu-card{max-height:92vh!important;}.qr-table-card img{width:125px;height:125px;}}
 @media (max-width:460px){.qr-table-grid,.qr-page-grid{grid-template-columns:1fr 1fr;gap:10px;}.qr-table-card{padding:12px;border-radius:16px;}.qr-table-card img{width:105px;height:105px;}.qr-menu-toolbar{flex-direction:column;align-items:stretch;}}
+
+
+/* ==========================================================
+   V11.1 — QR / floating action cleanup
+   The generic .theme-toggle rule above is intentionally kept for
+   terminal pages, but the customer floating theme button must stay
+   inside the three-button stack. These selectors are deliberately
+   more specific so older CSS cannot move it back to fixed positioning.
+   ========================================================== */
+.floating-actions .theme-toggle.floating-theme-toggle{
+    position:relative !important;
+    inset:auto !important;
+    right:auto !important;
+    bottom:auto !important;
+    top:auto !important;
+    left:auto !important;
+    width:58px !important;
+    min-width:58px !important;
+    height:58px !important;
+    min-height:58px !important;
+    padding:0 !important;
+    margin:0 !important;
+    border-radius:18px !important;
+}
+.floating-actions{
+    position:fixed !important;
+    right:22px !important;
+    bottom:22px !important;
+    top:auto !important;
+    left:auto !important;
+    z-index:10050 !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-end !important;
+    justify-content:flex-end !important;
+    gap:10px !important;
+}
+.floating-actions > .floating-cart,
+.floating-actions > .qr-menu-trigger,
+.floating-actions > .floating-theme-toggle{
+    flex:0 0 auto !important;
+}
+
+/* Wider QR manager: all 12 tables can breathe and scroll naturally. */
+.qr-menu-card{
+    width:min(1040px, calc(100vw - 32px)) !important;
+    max-width:1040px !important;
+    max-height:min(92vh, 900px) !important;
+    overflow-y:auto !important;
+    padding:28px !important;
+}
+.qr-menu-card .qr-table-grid{
+    grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+    gap:18px !important;
+}
+.qr-menu-card .qr-table-card{
+    min-width:0 !important;
+    padding:18px !important;
+}
+.qr-menu-card .qr-table-card img{
+    width:170px !important;
+    height:170px !important;
+}
+.qr-menu-toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    margin:0 0 18px;
+}
+@media (max-width:1000px){
+    .qr-menu-card .qr-table-grid{grid-template-columns:repeat(3,minmax(0,1fr)) !important;}
+}
+@media (max-width:720px){
+    .floating-actions{right:14px !important;bottom:14px !important;gap:8px !important;}
+    .floating-actions .theme-toggle.floating-theme-toggle,
+    .floating-actions .floating-action-button,
+    .floating-actions .floating-cart-trigger{
+        width:54px !important;height:54px !important;min-width:54px !important;min-height:54px !important;border-radius:16px !important;
+    }
+    .qr-menu-card{
+        width:min(96vw,720px) !important;
+        padding:20px !important;
+    }
+    .qr-menu-card .qr-table-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:12px !important;}
+    .qr-menu-card .qr-table-card img{width:135px !important;height:135px !important;}
+    .qr-menu-toolbar{flex-direction:column;align-items:stretch;}
+}
+@media (max-width:460px){
+    .qr-menu-card{padding:15px !important;}
+    .qr-menu-card .qr-table-card img{width:110px !important;height:110px !important;}
+}
+
+
+/* V11.2 — QR görüntüleme güvenilirliği */
+.qr-table-card img {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 170px !important;
+    height: 170px !important;
+    min-width: 170px !important;
+    min-height: 170px !important;
+    object-fit: contain !important;
+    background: #ffffff !important;
+    padding: 10px !important;
+    border-radius: 14px !important;
+}
+.qr-menu-card .qr-table-grid,
+.qr-page-grid {
+    align-items: start;
+}
+@media (max-width: 720px) {
+    .qr-table-card img {
+        width: 145px !important;
+        height: 145px !important;
+        min-width: 145px !important;
+        min-height: 145px !important;
+    }
+}
+@media (max-width: 460px) {
+    .qr-table-card img {
+        width: 120px !important;
+        height: 120px !important;
+        min-width: 120px !important;
+        min-height: 120px !important;
+    }
+}

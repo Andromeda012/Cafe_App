@@ -84,8 +84,8 @@
                     <span class="zone-letter">{{ table_item|string|upper|first }}</span>
                     <div><strong>Masa {{ table_item }}</strong><small>{{ 'Salon' if table_item|string|upper|first == 'A' else 'Bahçe' }}</small></div>
                 </div>
-                <img src="{{ url_for('qr_code', table=table_item) }}" alt="Masa {{ table_item }} QR kodu" loading="lazy">
-                <a class="qr-download-link" href="{{ url_for('qr_code', table=table_item) }}" download="noir-masa-{{ table_item }}.png">QR'ı kaydet</a>
+                <img src="{{ url_for('qr_code', table=table_item) }}" alt="Masa {{ table_item }} QR kodu" loading="eager" decoding="async">
+                <a class="qr-download-link" href="{{ url_for('qr_code', table=table_item) }}" download="noir-masa-{{ table_item }}.svg">QR'ı kaydet</a>
             </article>
             {% endfor %}
         </div>
